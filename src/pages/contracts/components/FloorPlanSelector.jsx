@@ -124,12 +124,15 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
       api.get(`/homes/${selectedHomeId}/`).then(res => {
         const home = res.data;
         if (home && home.building === Number(buildingId)) {
-          setSelectedFloor(Number(home.floor));
-          setSelectedPadez(Number(home.padez));
+          if (Number(home.floor) !== selectedFloor || Number(home.padez) !== selectedPadez) {
+            setSvgReady(false);
+            setSelectedFloor(Number(home.floor));
+            setSelectedPadez(Number(home.padez));
+          }
         }
       }).catch(err => console.error("Error fetching selected home:", err));
     }
-  }, [selectedHomeId, buildingId]);
+  }, [selectedHomeId, buildingId, selectedFloor, selectedPadez]);
 
   // Zoom-to-cursor logic
   useEffect(() => {
@@ -178,16 +181,11 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
     const padezNum = Number(selectedPadez);
 
     if (floorNum <= 2) {
-      // 1-2 qavatlar uchun (har bir padezda 5 tadan xonadon)
-      // Chap tomon: Padez 1
-      const p1Homes = planData.homes.filter(h => h.padez === 1).sort((a, b) => +a.number - +b.number);
-      const p1ColorOrder = ['#ff6a6a', '#50ab5b', '#6464ff', '#ff952b', '#83aefe'];
-      mapElements(coloredEls.filter(e => e.center.x < svgCenterX), p1Homes, p1ColorOrder);
-
-      // O'ng tomon: Padez 2
-      const p2Homes = planData.homes.filter(h => h.padez === 2).sort((a, b) => +a.number - +b.number);
-      const p2ColorOrder = ['#83aefe', '#ff952b', '#6464ff', '#50ab5b', '#ff6a6a'];
-      mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), p2Homes, p2ColorOrder);
+      // 1-2 qavatlar uchun (har bir qavat/padezda 5 tadan xonadon)
+      // Har bir padez alohida SVGda ko'rsatiladi (fayl takroran ishlatiladi)
+      const currentPadezHomes = planData.homes.filter(h => h.padez === padezNum).sort((a, b) => +a.number - +b.number);
+      const colorOrder = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
+      mapElements(coloredEls, currentPadezHomes, colorOrder);
     } else {
       // 3-7 qavatlar uchun (har bir padezda 6 tadan xonadon)
       const N = 11 + 6 * (floorNum - 3);
@@ -235,6 +233,62 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
     });
 
     bindEventsAndBadges(svg);
+
+    // Tanlangan va asl uylar dastlabki renderdayoq ranglansin (miltillashni yo'qotish uchun)
+    svg.querySelectorAll('[data-home-id]').forEach(el => {
+      const home = el.__home;
+      if (!home) return;
+      const isSel = String(home.id) === String(selectedHomeIdRef.current);
+      const isOrig = contractedHomeIdRef.current && String(home.id) === String(contractedHomeIdRef.current);
+      
+      let statusColor = null;
+      if (isOrig) {
+        statusColor = '#7c3aed';
+      } else if (isSel) {
+        statusColor = '#6366f1';
+      } else {
+        statusColor = STATUS_COLORS[home.status];
+      }
+      
+      if (statusColor) {
+        el.style.fill = statusColor;
+        el.setAttribute('fill', statusColor);
+      } else {
+        el.style.fill = '';
+        el.setAttribute('fill', el.__originalFill || '');
+      }
+      
+      if (isOrig && isSel) {
+        el.classList.remove('fp-selected-apt');
+        el.classList.remove('fp-original-apt');
+        el.classList.add('fp-original-selected-apt');
+        el.style.fillOpacity = '';
+        el.style.stroke = '';
+        el.style.strokeWidth = '';
+      } else if (isSel) {
+        el.classList.add('fp-selected-apt');
+        el.classList.remove('fp-original-apt');
+        el.classList.remove('fp-original-selected-apt');
+        el.style.fillOpacity = '';
+        el.style.stroke = '';
+        el.style.strokeWidth = '';
+      } else if (isOrig) {
+        el.classList.remove('fp-selected-apt');
+        el.classList.add('fp-original-apt');
+        el.classList.remove('fp-original-selected-apt');
+        el.style.fillOpacity = '';
+        el.style.stroke = '';
+        el.style.strokeWidth = '';
+      } else {
+        el.classList.remove('fp-selected-apt');
+        el.classList.remove('fp-original-apt');
+        el.classList.remove('fp-original-selected-apt');
+        el.style.fillOpacity = (home.status === 'AVAILABLE' || home.status === 'available') ? '0.5' : '';
+        el.style.stroke = '';
+        el.style.strokeWidth = '';
+      }
+    });
+
     setSvgReady(true);
     // DIQQAT: selectedHomeId o'zgarganda zoomni reset qilmaslik uchun bu useEffect-ni ehtiyotkorlik bilan ishlatamiz
   }, [svgContent, planData, selectedFloor, selectedPadez]); // selectedHomeId-ni bu yerdan olib tashladik!
@@ -517,12 +571,14 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
 
   const handlePadezClick = (p) => {
     if (p !== selectedPadez) {
+      setSvgReady(false);
       setSelectedPadez(p);
     }
   };
 
   const handleFloorClick = (f) => {
     if (f !== selectedFloor) {
+      setSvgReady(false);
       setSelectedFloor(f);
     }
   };
@@ -664,7 +720,7 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
         </div>
 
         <div className="fp-map-container" ref={containerRef} onMouseDown={(e)=>{if(!e.target.closest('[data-home-id]'))dragRef.current={active:true,sx:e.clientX,sy:e.clientY,stx:txRef.current,sty:tyRef.current}}} onMouseMove={(e)=>{if(!dragRef.current.active)return;txRef.current=dragRef.current.stx+(e.clientX-dragRef.current.sx);tyRef.current=dragRef.current.sty+(e.clientY-dragRef.current.sy);applyTransform()}} onMouseUp={()=>dragRef.current.active=false} onMouseLeave={()=>dragRef.current.active=false} style={{ position: 'relative', minHeight: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {loading && (
+          {(loading || (planData?.has_plan && !svgReady)) && (
             <div className="loading-state" style={{ position: 'absolute', inset: 0, background: 'var(--bg-glass)', backdropFilter: 'blur(4px)', zIndex: 10, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '12px' }}>
               <div className="spinner"></div>
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Reja yuklanmoqda...</span>
