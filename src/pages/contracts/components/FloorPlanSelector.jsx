@@ -70,6 +70,7 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
   const hoveredGroupRef  = useRef(null);
   const hoverTimeoutRef  = useRef(null);
   const userClickedRef   = useRef(false);
+  const lastNavigatedHomeIdRef = useRef(null);
 
   const applyTransform = useCallback(() => {
     if (svgWrapRef.current) {
@@ -115,15 +116,25 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
 
   // Tanlangan xonadon bor bo'lsa, avtomatik uning qavati va padeziga o'tish
   useEffect(() => {
+    if (!selectedHomeId) {
+      lastNavigatedHomeIdRef.current = null;
+      return;
+    }
+
     if (selectedHomeId && buildingId) {
+      if (lastNavigatedHomeIdRef.current === selectedHomeId) {
+        return;
+      }
       // Agar foydalanuvchi o'zi kliklagan bo'lsa, avtomatik o'tish shart emas
       if (userClickedRef.current) {
         userClickedRef.current = false;
+        lastNavigatedHomeIdRef.current = selectedHomeId;
         return;
       }
       api.get(`/homes/${selectedHomeId}/`).then(res => {
         const home = res.data;
         if (home && home.building === Number(buildingId)) {
+          lastNavigatedHomeIdRef.current = selectedHomeId;
           if (Number(home.floor) !== selectedFloor || Number(home.padez) !== selectedPadez) {
             setSvgReady(false);
             setSelectedFloor(Number(home.floor));
