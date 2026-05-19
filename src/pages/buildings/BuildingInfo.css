@@ -1,0 +1,374 @@
+/* BuildingInfo.css - Styles for Building Info page */
+
+/* Adaptive header integration - no need for old page-header styles */
+/* The adaptive header handles all positioning, z-index, and animations */
+
+.building-info-page {
+    padding-top: 0;
+    /* Adaptive header handles spacing */
+}
+
+.building-info-page .create-content {
+    padding-top: 24px;
+    /* Space after adaptive header when expanded */
+}
+
+/* Empty state */
+.building-info-page .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    text-align: center;
+    gap: 16px;
+}
+
+.building-info-page .empty-state svg {
+    opacity: 0.5;
+}
+
+/* Loading state */
+.building-info-page .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    gap: 16px;
+}
+
+.building-info-page .loading-state .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Modals are global in modals.css */
+
+/* Image Preview Modal Fix */
+.building-info-page .modal-content img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    width: auto;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.building-info-page .image-modal-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 300px;
+    padding: 20px;
+}
+
+/* Modal-xl for images */
+.building-info-page .modal-content.modal-xl {
+    max-width: 85vw;
+    max-height: 85dvh;
+}
+
+@media (max-width: 768px) {
+    .building-info-page .modal-content.modal-xl {
+        max-width: 95vw;
+        max-height: 80dvh;
+    }
+
+    .building-info-page .image-modal-wrapper {
+        min-height: 200px;
+        padding: 12px;
+    }
+}
+
+.contract-preview-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 16px;
+}
+
+.contract-info-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.contract-info-card .info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.contract-info-card .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contract-info-card .info-item .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.contract-info-card .info-item .value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.btn-view-contract {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+    color: var(--primary-color);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-view-contract:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.preview-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 30px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.spinner-sm {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.preview-error {
+    padding: 20px;
+    text-align: center;
+    color: #ef4444;
+    font-size: 13px;
+    background: rgba(239, 68, 68, 0.05);
+    border-radius: 10px;
+}
+
+/* Images section in modal */
+.images-section {
+    margin-top: 24px;
+}
+
+.images-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+}
+
+.images-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.images-row .image-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+}
+
+.images-row .image-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.images-row .image-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+    background: var(--bg-tertiary);
+}
+
+.images-row .image-card span {
+    display: block;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    background: var(--bg-primary);
+}
+
+/* Button */
+.btn-secondary {
+    padding: 10px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+
+/* Home Details Modal Specifics */
+.home-details-modal .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.home-details-modal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.home-details-modal .modal-title h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.home-details-modal .status-badge {
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.home-details-modal .modal-body {
+    padding: 24px;
+}
+
+.home-details-modal .home-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    background: var(--bg-secondary);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.home-details-modal .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.home-details-modal .summary-item .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.home-details-modal .summary-item .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.home-details-modal .summary-item .value.highlight {
+    color: #6366f1;
+    font-size: 18px;
+}
+
+/* Legend tweaks */
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+/* Form Grid Mobile Tweak */
+@media (max-width: 480px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .home-details-modal .home-summary {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Responsive modal tweaks */
+@media (max-width: 768px) {
+
+    .building-info-page .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .home-details-modal .home-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .home-details-modal .summary-item .value {
+        font-size: 14px;
+    }
+
+    .home-details-modal .summary-item .value.highlight {
+        font-size: 16px;
+    }
+
+    .home-details-modal .modal-title h3 {
+        font-size: 18px;
+    }
+
+    .images-row {
+        grid-template-columns: 1fr;
+    }
+}

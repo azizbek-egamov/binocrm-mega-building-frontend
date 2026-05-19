@@ -1,0 +1,81 @@
+/* ==========================================
+   LAYOUT COMPONENT STYLES - RESPONSIVE FIX
+   ========================================== */
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    background: var(--bg-primary);
+    position: relative;
+}
+
+.main-content {
+    flex: 1;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    background: var(--bg-primary);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: margin-left;
+    contain: paint;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Desktop - Sidebar Open */
+.main-content.sidebar-open {
+    margin-left: var(--sidebar-width-open);
+}
+
+/* Desktop - Sidebar Closed */
+.main-content.sidebar-closed {
+    margin-left: 0;
+}
+
+/* Mobile */
+.main-content.mobile {
+    margin-left: 0;
+    padding-top: 60px;
+    /* Account for mobile menu button */
+}
+
+/* Responsive - Tablet 1024px */
+@media (max-width: 1024px) {
+
+    .main-content.sidebar-open,
+    .main-content.sidebar-closed {
+        margin-left: 0;
+        padding-top: 60px;
+    }
+}
+
+/* Responsive - Mobile 768px */
+@media (max-width: 768px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .main-content {
+        width: 100%;
+        padding: 0;
+        min-height: calc(100vh - 60px);
+        min-height: calc(100dvh - 60px);
+        padding-top: 60px;
+        /* Pages handle their own internal padding */
+    }
+}
+
+/* Extra small screens - 480px */
+@media (max-width: 480px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .main-content {
+        min-height: calc(100vh - 56px);
+        min-height: calc(100dvh - 56px);
+        padding-top: 56px;
+    }
+}

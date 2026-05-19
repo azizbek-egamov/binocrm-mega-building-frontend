@@ -1,0 +1,158 @@
+/* ==========================================
+   ADAPTIVE PAGE HEADER (NON-STICKY VERSION)
+   Simplified header that scrolls with content
+   ========================================== */
+
+.adaptive-page-header {
+    position: relative;
+    width: 100%;
+    z-index: 40;
+    background: var(--bg-primary);
+    transition: all 0.3s ease;
+}
+
+/* ==========================================
+   STATE: EXPANDED (at top of page)
+   ========================================== */
+.adaptive-page-header.state-expanded {
+    background: var(--bg-primary);
+}
+
+.adaptive-page-header.state-expanded .header-content {
+    padding: 24px;
+    max-height: none;
+}
+
+.adaptive-page-header.state-expanded .header-subtitle {
+    opacity: 1;
+    margin-top: 8px;
+}
+
+/* ==========================================
+   STATE: COLLAPSED (Visual match for scrolling)
+   ========================================== */
+.adaptive-page-header.state-collapsed {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.adaptive-page-header.state-collapsed .header-content {
+    padding: 16px 24px;
+}
+
+.adaptive-page-header.state-collapsed .header-subtitle {
+    display: none;
+}
+
+/* ==========================================
+   STATE: HIDDEN (Force visible - non-sticky)
+   ========================================== */
+.adaptive-page-header.state-hidden {
+    display: block !important;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+}
+
+/* ==========================================
+   HEADER CONTENT STRUCTURE
+   ========================================== */
+.adaptive-page-header .header-background {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: -1;
+}
+
+.adaptive-page-header .header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.adaptive-page-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.adaptive-page-header .header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.adaptive-page-header .header-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.adaptive-page-header .header-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.adaptive-page-header .icon-box {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.adaptive-page-header .header-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+    .adaptive-page-header .header-content {
+        padding: 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .adaptive-page-header .header-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .adaptive-page-header .header-title {
+        font-size: 20px;
+    }
+
+    .adaptive-page-header .icon-box {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .adaptive-page-header .header-content {
+        padding: 12px;
+    }
+
+    .adaptive-page-header .header-title {
+        font-size: 18px;
+    }
+}

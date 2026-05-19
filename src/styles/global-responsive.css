@@ -1,0 +1,508 @@
+/* ==========================================
+   GLOBAL RESPONSIVE FIXES
+   Barcha sahifalar uchun umumiy responsive tuzatishlar
+   ========================================== */
+
+/* ==========================================
+   1. PAGE HEADER - CHAP TOMONGA STANDART TEKISLASH (GLOBAL)
+   ========================================== */
+
+/* Global page header - barcha ekran o'lchamlarida chap tomonda */
+.page-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.page-header .header-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start !important;
+    text-align: left !important;
+    gap: 4px !important;
+    /* Title va subtitle orasini desktopda ham yaqinlashtirish */
+}
+
+.page-header .page-title,
+.page-header h1 {
+    text-align: left !important;
+    margin: 0 !important;
+}
+
+.page-header .page-subtitle,
+.page-header p {
+    text-align: left !important;
+    margin: 0 !important;
+}
+
+.page-header .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+/* Responsive - mobile uchun full width */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    .page-header .header-left {
+        width: 100%;
+        gap: 2px !important;
+        /* Title va subtitle orasini yaqinlashtirish */
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        font-size: 24px !important;
+        /* Kattaroq sarlavha */
+        line-height: 1.2;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        font-size: 13px !important;
+        margin-top: 0 !important;
+    }
+
+    .page-header .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+/* ==========================================
+   2. MODAL INPUT/SELECT - RESPONSIVE O'LCHAMLAR
+   ========================================== */
+@media (max-width: 768px) {
+
+    .modal-content .form-group input,
+    .modal-content .form-group select,
+    .modal-content .form-group textarea {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .modal-content .form-group label {
+        font-size: 10px;
+        margin-bottom: 4px;
+    }
+
+    .modal-content .form-group {
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .modal-content .form-group input,
+    .modal-content .form-group select,
+    .modal-content .form-group textarea {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .modal-content .form-group label {
+        font-size: 9px;
+    }
+
+    .modal-content .form-group {
+        margin-bottom: 10px;
+    }
+
+    /* SEARCH BOX COMPACT DESIGN */
+    .search-box,
+    .leads-search-box {
+        padding: 8px 12px !important;
+        gap: 8px !important;
+        border-radius: 10px !important;
+    }
+
+    .search-box input,
+    .leads-search-box input {
+        font-size: 13px !important;
+    }
+
+    .search-box svg,
+    .leads-search-box svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    /* ==========================================
+       TABLE RESPONSIVENESS - PREVENT SQUEEZING
+       ========================================== */
+    .data-table,
+    table:not(.calendar-table) {
+        min-width: 800px !important;
+        /* Table siqilmasligi uchun minimal kenglik */
+    }
+
+    .data-table th,
+    .data-table td,
+    table th,
+    table td {
+        padding: 12px 16px !important;
+        /* Ustunlar orasini kengaytirish */
+        white-space: nowrap;
+        /* Matn pastga tushib ketmasligi uchun */
+    }
+
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+        /* Scrollbar uchun joy */
+    }
+}
+
+/* ==========================================
+   3. FILTER DRAWER - MODALS.CSS ANDOZASIDA
+   ========================================== */
+
+/* Body scroll lock - modals.css kabi */
+body.filter-drawer-open {
+    overflow: hidden !important;
+    padding-right: var(--scrollbar-width, 0px);
+}
+
+body:has(.filter-drawer-overlay) {
+    overflow: hidden !important;
+}
+
+/* Filter drawer overlay - modal-overlay kabi */
+.filter-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    z-index: 9999;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    contain: layout;
+    isolation: isolate;
+}
+
+/* Filter drawer panel */
+.filter-drawer {
+    position: relative;
+    z-index: 10000;
+    height: 100%;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Filter drawer X tugmasi - eng yuqori z-index */
+.filter-drawer .close-btn,
+.filter-drawer .drawer-header .close-btn {
+    z-index: 10001 !important;
+    position: relative;
+}
+
+/* Filter drawer ochilganda mobile-menu-btn ni yashirish */
+body:has(.filter-drawer-overlay) .mobile-menu-btn {
+    display: none !important;
+}
+
+/* ==========================================
+   4. CHECKBOX/TOGGLE - ZAMONAVIY DIZAYN
+   ========================================== */
+
+/* Custom Checkbox as Toggle */
+.custom-checkbox {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-checkbox input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.custom-checkbox .checkmark {
+    width: 22px;
+    height: 22px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.custom-checkbox input:checked+.checkmark {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: #6366f1;
+}
+
+.custom-checkbox .checkmark svg {
+    width: 14px;
+    height: 14px;
+    color: white;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+}
+
+.custom-checkbox input:checked+.checkmark svg {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.custom-checkbox:hover .checkmark {
+    border-color: var(--primary-color);
+}
+
+.custom-checkbox .label-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+@media (max-width: 480px) {
+    .custom-checkbox .checkmark {
+        width: 20px;
+        height: 20px;
+    }
+
+    .custom-checkbox .checkmark svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .custom-checkbox .label-text {
+        font-size: 13px;
+    }
+}
+
+/* ==========================================
+   5. CONTENT CARD - RESPONSIVE DA KO'RINISH
+   ========================================== */
+@media (max-width: 768px) {
+    .building-expenses-container .content-card {
+        display: flex !important;
+        flex-direction: column;
+        min-height: 300px;
+    }
+
+    .building-expenses-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: auto;
+    }
+
+    .building-list-panel {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+/* ==========================================
+   6. ESKIZ BALANCE WIDGET - RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+    .eskiz-balance-widget {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .eskiz-balance-widget .balance-amount {
+        font-size: 18px;
+    }
+
+    .eskiz-balance-widget .balance-label {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .eskiz-balance-widget {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .eskiz-balance-widget .balance-amount {
+        font-size: 16px;
+    }
+}
+
+/* ==========================================
+   7. MODAL - 100DVH VA SCROLL FIX
+   ========================================== */
+
+/* Ensure modals use dynamic viewport height */
+.modal-overlay {
+    min-height: 100dvh !important;
+    height: 100dvh !important;
+}
+
+.modal-content {
+    max-height: calc(100dvh - 48px) !important;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        max-height: calc(100dvh - 32px) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        max-height: calc(100dvh - 16px) !important;
+    }
+}
+
+/* Body scroll lock when modal open */
+body.modal-open,
+body:has(.modal-overlay) {
+    overflow: hidden !important;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* ==========================================
+   8. BUILDINGS INFO - MODAL RASM FIX
+   ========================================== */
+@media (max-width: 768px) {
+    .building-info-page .modal-content {
+        max-height: 85dvh;
+    }
+
+    .building-info-page .modal-body {
+        max-height: calc(85dvh - 120px);
+        overflow-y: auto;
+    }
+
+    .building-info-page .modal-content img {
+        max-height: 50dvh;
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+/* ==========================================
+   9. MOBILE MENU BTN - Z-INDEX TOZALASH
+   ========================================== */
+.mobile-menu-btn {
+    z-index: 110;
+}
+
+/* Filter drawer va modal ochilganda mobile-menu-btn pasayadi */
+body:has(.filter-drawer-overlay) .mobile-menu-btn,
+body:has(.modal-overlay) .mobile-menu-btn {
+    z-index: 50;
+}
+
+/* ==========================================
+   11. EXCEL IMPORT MODAL - RESPONSIVE FIX
+   ========================================== */
+@media (max-width: 768px) {
+    .import-modal .modal-header {
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        gap: 10px;
+    }
+
+    .modal-header-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .modal-header-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .modal-header-text h3 {
+        font-size: 16px;
+    }
+
+    .template-download {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .btn-download {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .format-columns {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px;
+    }
+
+    .format-column {
+        padding: 6px 2px;
+    }
+
+    .col-name {
+        font-size: 9px;
+    }
+
+    .drop-zone {
+        padding: 24px 16px;
+        margin-bottom: 16px;
+    }
+
+    .drop-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 4px;
+    }
+
+    .drop-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .format-columns {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .modal-header-text h3 {
+        font-size: 15px;
+    }
+
+    .drop-title {
+        font-size: 13px;
+    }
+
+    .drop-browse {
+        font-size: 12px;
+    }
+}

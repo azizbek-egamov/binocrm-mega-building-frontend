@@ -1,0 +1,135 @@
+/* ==========================================
+   TABLE RESPONSIVENESS UTILITIES
+   ========================================== */
+
+/* Base responsive table setup */
+.responsive-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 280px);
+    width: 100%;
+    border-radius: 12px;
+}
+
+.responsive-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 100%;
+}
+
+/* Column visibility control */
+.table-col-primary {
+    /* Always visible - name, id, key info */
+}
+
+.table-col-secondary {
+    /* Hide on mobile (< 768px) */
+}
+
+.table-col-tertiary {
+    /* Hide on small mobile (< 480px) */
+}
+
+/* Desktop - all columns visible */
+@media (min-width: 1024px) {
+    .table-col-primary,
+    .table-col-secondary,
+    .table-col-tertiary {
+        display: table-cell !important;
+    }
+}
+
+/* Tablet 768px - hide tertiary columns */
+@media (max-width: 1023px) {
+    .table-col-primary,
+    .table-col-secondary {
+        display: table-cell !important;
+    }
+
+    .table-col-tertiary {
+        display: none !important;
+    }
+}
+
+/* Mobile 480px - hide secondary and tertiary columns */
+@media (max-width: 767px) {
+    .table-col-primary {
+        display: table-cell !important;
+    }
+
+    .table-col-secondary,
+    .table-col-tertiary {
+        display: none !important;
+    }
+
+    .responsive-table-container {
+        max-height: calc(100vh - 200px);
+    }
+
+    /* Reduce padding on mobile */
+    .responsive-table th,
+    .responsive-table td {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .responsive-table th {
+        font-size: 11px;
+    }
+}
+
+/* Extra small mobile 360px */
+@media (max-width: 479px) {
+    .responsive-table-container {
+        max-height: calc(100vh - 160px);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .responsive-table th,
+    .responsive-table td {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .responsive-table th {
+        font-size: 10px;
+    }
+}
+
+/* Card-based table view for ultra-small mobile (optional) */
+@media (max-width: 360px) {
+    .responsive-table-as-cards {
+        display: block;
+    }
+
+    .responsive-table-as-cards .responsive-table {
+        display: block;
+    }
+
+    .responsive-table-as-cards .responsive-table thead {
+        display: none;
+    }
+
+    .responsive-table-as-cards .responsive-table tbody tr {
+        display: block;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: var(--bg-secondary);
+    }
+
+    .responsive-table-as-cards .responsive-table td {
+        display: block;
+        text-align: right;
+        padding: 6px 0;
+        border: none;
+    }
+
+    .responsive-table-as-cards .responsive-table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+}

@@ -1,0 +1,235 @@
+/* ==========================================
+   Z-INDEX HIERARCHY SYSTEM
+   ========================================== */
+
+/*
+Z-INDEX LAYER SYSTEM:
+- 0-50:    Base layers (content)
+- 50-100:  Relative positioning
+- 100-200: Sidebar and main navigation
+- 200-500: Modals and overlays
+- 500-999: Tooltips and popovers
+- 1000+:   System alerts and notifications
+
+CURRENT IMPLEMENTATION:
+*/
+
+/* Layer 1: Base Content (0-50) */
+:root {
+  --z-content: 1;
+  --z-hover: 2;
+  --z-dropdown: 5;
+}
+
+/* Layer 2: Navigation (100-200) */
+:root {
+  --z-sidebar: 100;
+  --z-sidebar-open: 100;
+  --z-sidebar-overlay: 90;
+  --z-toggle-button: 150;
+  --z-mobile-menu-btn: 110;
+  --z-filter-drawer: 999;
+}
+
+/* Layer 3: Modals & Overlays (200-500) */
+:root {
+  --z-modal-overlay: 1000;
+  --z-modal-content: 1001;
+  --z-backdrop: 999;
+}
+
+/* Layer 4: Floating Elements (500-999) */
+:root {
+  --z-tooltip: 800;
+  --z-popover: 750;
+  --z-floating-action: 100;
+}
+
+/* Layer 5: System (1000+) */
+:root {
+  --z-toast: 2000;
+  --z-alert: 2001;
+  --z-loading-overlay: 1500;
+}
+
+/* ==========================================
+   ACTUAL Z-INDEX ASSIGNMENTS
+   ========================================== */
+
+/* Sidebar Structure */
+.sidebar {
+  z-index: var(--z-sidebar);
+}
+
+.sidebar-overlay {
+  z-index: var(--z-sidebar-overlay);
+}
+
+.sidebar-toggle {
+  z-index: var(--z-toggle-button);
+}
+
+.mobile-menu-btn {
+  z-index: var(--z-mobile-menu-btn);
+}
+
+/* Modal Structure */
+.modal-overlay {
+  z-index: var(--z-modal-overlay);
+}
+
+.modal-content {
+  z-index: var(--z-modal-content);
+}
+
+/* Toast Notifications */
+[data-sonner-toaster] {
+  z-index: var(--z-toast) !important;
+  pointer-events: none;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto;
+}
+
+/* Dropdowns and Menus */
+[role="listbox"],
+[role="menu"],
+.dropdown {
+  z-index: var(--z-popover);
+}
+
+/* Tooltips */
+[data-tooltip] {
+  z-index: var(--z-tooltip);
+}
+
+/* ==========================================
+   SAFE AREA PADDING (Notch Devices)
+   ========================================== */
+
+
+
+/* Sidebar safe area */
+.sidebar {
+  padding-top: max(0px, env(safe-area-inset-top));
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
+}
+
+/* Modal safe area */
+.modal-overlay {
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  padding-left: max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
+}
+
+
+
+/* ==========================================
+   MOBILE KEYBOARD HANDLING
+   ========================================== */
+
+/* Use dynamic viewport height (dvh) instead of vh */
+html,
+body,
+.app-layout,
+.main-content {
+  height: 100dvh;
+  /* Adjusts when mobile keyboard appears */
+}
+
+/* Modal with keyboard support */
+.modal-overlay {
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.modal-content {
+  max-height: calc(100dvh - 48px);
+}
+
+.modal-content.modal-form form {
+  max-height: calc(100dvh - 200px);
+}
+
+/* Input fields - prevent zoom on iOS */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+textarea,
+select {
+  font-size: 16px;
+  /* iOS zoom prevention */
+}
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================== */
+
+@media (max-width: 1024px) {
+  :root {
+    --z-sidebar: 100;
+    /* Sidebar remains same but overlay changes below */
+  }
+
+  .sidebar-overlay {
+    z-index: 90;
+    /* Below sidebar to not block interactions */
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --z-mobile-menu-btn: 110;
+    --z-sidebar: 100;
+    --z-modal-overlay: 1000;
+  }
+
+  /* Ensure touch targets are accessible */
+  button,
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Safe area for landscape orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  body {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .sidebar {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+}
+
+/* ==========================================
+   VIEWPORT META RECOMMENDATIONS
+   ========================================== */
+
+/*
+Add to HTML <head>:
+
+<meta name="viewport" content="
+  width=device-width,
+  initial-scale=1.0,
+  maximum-scale=5.0,
+  user-scalable=yes,
+  viewport-fit=cover
+">
+
+Details:
+- width=device-width: Use device width as viewport width
+- initial-scale=1.0: Start at 100% zoom
+- maximum-scale=5.0: Allow up to 5x zoom for accessibility
+- user-scalable=yes: Allow user pinch zoom
+- viewport-fit=cover: Handle notch/safe areas
+*/

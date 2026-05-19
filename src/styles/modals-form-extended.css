@@ -1,0 +1,350 @@
+/* ==========================================
+   STANDARDIZED MODAL FORM COMPONENTS
+   Unified styling guide for all modals
+   ========================================== */
+
+/* FORM FIELDS IN MODALS */
+.modal-content .form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-content .form-group label .required {
+    color: #ef4444;
+    margin-left: 3px;
+}
+
+.modal-content .form-group input,
+.modal-content .form-group select,
+.modal-content .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    outline: none;
+    font-family: inherit;
+}
+
+.modal-content .form-group textarea {
+    min-height: 120px;
+    resize: none;
+    line-height: 1.6;
+}
+
+.modal-content .form-group input::placeholder,
+.modal-content .form-group textarea::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.modal-content .form-group input:focus,
+.modal-content .form-group select:focus,
+.modal-content .form-group textarea:focus {
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.modal-content .form-group input:disabled,
+.modal-content .form-group select:disabled {
+    background: rgba(0, 0, 0, 0.02);
+    cursor: not-allowed;
+    color: var(--text-muted);
+}
+
+/* PRICE INPUT - Special styling */
+.modal-content .price-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 12px;
+    background: var(--bg-tertiary);
+    transition: all 0.3s ease;
+}
+
+.modal-content .price-input-wrapper input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px 0;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    margin: 0;
+}
+
+.modal-content .price-input-wrapper span {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.modal-content .price-input-wrapper:focus-within {
+    border-color: var(--primary-color);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+/* INFO DISPLAY IN MODALS */
+.modal-content .modal-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    gap: 12px;
+}
+
+.modal-content .modal-info-row:first-of-type {
+    padding-top: 0;
+}
+
+.modal-content .modal-info-row:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.modal-content .modal-info-row span {
+    color: var(--text-secondary);
+    font-weight: 500;
+    flex: 0 0 auto;
+}
+
+.modal-content .modal-info-row strong {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: right;
+    flex: 1;
+}
+
+/* INFO NOTES - Multiple variants */
+.modal-content .modal-info-note {
+    padding: 14px 16px;
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+.modal-content .modal-info-note strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.modal-content .modal-info-note.warning {
+    background: rgba(245, 158, 11, 0.05);
+    border-color: rgba(245, 158, 11, 0.15);
+}
+
+.modal-content .modal-info-note.danger {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.15);
+}
+
+.modal-content .modal-info-note.success {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(16, 185, 129, 0.15);
+}
+
+/* BUTTON STYLES IN MODALS */
+.modal-actions .btn-v2 {
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-actions .btn-v2-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.modal-actions .btn-v2-primary:hover:not(:disabled) {
+    background: #4f46e5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.modal-actions .btn-v2-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.modal-actions .btn-v2-secondary:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.modal-actions .btn-v2-danger-light {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.modal-actions .btn-v2-danger-light:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+.modal-actions .btn-v2:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* MODAL FORM GRID LAYOUT */
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.modal-form-grid .form-group {
+    width: 100%;
+}
+
+@media (max-width: 640px) {
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* HISTORY DISPLAY */
+.modal-content .history-section {
+    margin-top: 24px;
+}
+
+.modal-content .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-content .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-content .history-card {
+    padding: 12px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.modal-content .history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+.modal-content .history-date {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.modal-content .history-time {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 2px;
+    display: block;
+}
+
+.modal-content .history-amount {
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.modal-content .history-amount.text-success {
+    color: #10b981;
+}
+
+.modal-content .history-amount.text-danger {
+    color: #ef4444;
+}
+
+.modal-content .history-note {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 8px;
+}
+
+.modal-content .no-history-alert {
+    padding: 14px 16px;
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+/* RESPONSIVE ADJUSTMENTS */
+@media (max-width: 640px) {
+    .modal-content .form-group {
+        margin-bottom: 16px;
+    }
+
+    .modal-content .modal-info-row {
+        padding: 12px 0;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .modal-content .modal-info-row strong {
+        text-align: left;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .modal-actions .btn-v2 {
+        width: 100%;
+        padding: 12px 16px;
+    }
+}
