@@ -49,12 +49,17 @@ const LeadsList = () => {
     };
 
     const [leads, setLeads] = useState([]);
+    const [stages, setStages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [filters, setFilters] = useState({
         search: '',
         status: '',
+        source_type: '',
+        heard_source: '',
+        stage: '',
+        only_new: false,
     });
 
     const [deleteModal, setDeleteModal] = useState({ open: false, lead: null });
@@ -72,9 +77,21 @@ const LeadsList = () => {
     }, [filters.search]);
 
     useEffect(() => {
+        const fetchStages = async () => {
+            try {
+                const res = await leadService.getStages();
+                setStages(Array.isArray(res.data) ? res.data : (res.data.results || []));
+            } catch (err) {
+                console.error("Error fetching stages:", err);
+            }
+        };
+        fetchStages();
+    }, []);
+
+    useEffect(() => {
         fetchLeads();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, debouncedSearch, filters.status, refreshTrigger]);
+    }, [page, debouncedSearch, filters.status, filters.source_type, filters.heard_source, filters.stage, filters.only_new, refreshTrigger]);
 
     const fetchLeads = async () => {
         setLoading(true);
@@ -84,6 +101,13 @@ const LeadsList = () => {
                 search: debouncedSearch,
                 status: filters.status
             };
+            if (filters.source_type) params.source_type = filters.source_type;
+            if (filters.heard_source) params.heard_source = filters.heard_source;
+            if (filters.only_new) {
+                params.stage_key = 'new-lead';
+            } else if (filters.stage) {
+                params.stage = filters.stage;
+            }
             const res = await leadService.getAll(params);
             const data = res.data;
             const results = Array.isArray(data) ? data : (data.results || []);
@@ -120,7 +144,11 @@ const LeadsList = () => {
     };
 
     const handleFilterChange = (e) => {
-        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value, type, checked } = e.target;
+        setFilters(prev => ({ 
+            ...prev, 
+            [name]: type === 'checkbox' ? checked : value 
+        }));
         setPage(1);
     };
 
@@ -162,6 +190,70 @@ const LeadsList = () => {
                             onChange={handleFilterChange}
                         />
                     </div>
+
+                    <select
+                        className="toolbar-select"
+                        name="status"
+                        value={filters.status}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">Status (Barchasi)</option>
+                        <option value="answered">Javob berildi</option>
+                        <option value="not_answered">Javob berilmadi</option>
+                        <option value="client_answered">Mijoz javob berdi</option>
+                        <option value="client_not_answered">Mijoz javob bermadi</option>
+                    </select>
+
+                    <select
+                        className="toolbar-select"
+                        name="source_type"
+                        value={filters.source_type}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">Manba turi (Barchasi)</option>
+                        <option value="manual">✍️ Qo'lda kiritilgan</option>
+                        <option value="form">📄 Forma orqali</option>
+                        <option value="import">🤖 Telegram (Userbot)</option>
+                    </select>
+
+                    <select
+                        className="toolbar-select"
+                        name="heard_source"
+                        value={filters.heard_source}
+                        onChange={handleFilterChange}
+                    >
+                        <option value="">Qayerdan eshitgan (Barchasi)</option>
+                        <option value="Telegramda">Telegramda</option>
+                        <option value="Instagramda">Instagramda</option>
+                        <option value="YouTubeda">YouTubeda</option>
+                        <option value="Odamlar orasida">Odamlar orasida</option>
+                        <option value="Xech qayerda">Xech qayerda</option>
+                    </select>
+
+                    <select
+                        className="toolbar-select"
+                        name="stage"
+                        value={filters.stage}
+                        onChange={handleFilterChange}
+                        disabled={filters.only_new}
+                        style={{ opacity: filters.only_new ? 0.5 : 1 }}
+                    >
+                        <option value="">Bosqich (Barchasi)</option>
+                        {stages.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                    </select>
+
+                    <label className="toolbar-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', cursor: 'pointer', userSelect: 'none', marginLeft: '8px', color: 'var(--text-secondary)' }}>
+                        <input
+                            type="checkbox"
+                            name="only_new"
+                            checked={filters.only_new}
+                            onChange={handleFilterChange}
+                            style={{ cursor: 'pointer' }}
+                        />
+                        🆕 Faqat yangi leadlar
+                    </label>
                 </div>
                 <div className="toolbar-right">
                     <button className="btn-v2 btn-v2-primary" onClick={() => openCreateModal()}>

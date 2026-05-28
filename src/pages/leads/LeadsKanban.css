@@ -18,6 +18,96 @@
     transition: all 0.2s;
 }
 
+.column-local-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(6px);
+}
+
+.column-local-filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.column-local-filters-title {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.column-filter-clear-btn {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.column-filter-clear-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.column-filter-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.column-filter-grid.is-new-lead {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.column-filter-grid.is-forms {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.column-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.column-filter-field label {
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.column-local-filters .column-filter-select {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: 38px;
+    padding: 8px 34px 8px 12px;
+    font-size: 11px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
 .column-filter-select:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
@@ -34,9 +124,23 @@
         align-items: flex-start;
     }
 
+    .column-local-filters-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .column-filter-grid.is-new-lead {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .column-filter-select {
         max-width: 100%;
         width: 100%;
+    }
+
+    .column-filter-clear-btn {
+        width: 100%;
+        text-align: center;
     }
 }
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { leadService } from '../../services/leads';
 import { getUsers } from '../../services/users';
-import api from '../../services/api';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
@@ -269,11 +268,13 @@ const LeadsKanban = () => {
     const [quickAddColumn, setQuickAddColumn] = useState(null);
     const [availableForms, setAvailableForms] = useState([]);
     const [formFilter, setFormFilter] = useState('all');
+    const [newLeadSourceFilter, setNewLeadSourceFilter] = useState('all');
+    const [newLeadHeardFilter, setNewLeadHeardFilter] = useState('all');
     const [operatorFilter, setOperatorFilter] = useState('all');
     const [followUpFilter, setFollowUpFilter] = useState('all');
+    const [sourceTypeFilter, setSourceTypeFilter] = useState('all');
+    const [heardSourceFilter, setHeardSourceFilter] = useState('all');
     const [operators, setOperators] = useState([]);
-    const [isExporting, setIsExporting] = useState(false);
-
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -293,6 +294,37 @@ const LeadsKanban = () => {
     const [bulkAssigning, setBulkAssigning] = useState(false);
     const [bulkUpdatingStage, setBulkUpdatingStage] = useState(false);
 
+    const getVisibleColumnItems = useCallback((col) => {
+        return Array.isArray(col?.items) ? col.items : [];
+    }, []);
+
+    const getKanbanLocalFilterParams = useCallback(() => {
+        const params = {};
+
+        if (newLeadSourceFilter !== 'all') {
+            params.kanban_new_lead_source_type = newLeadSourceFilter;
+        }
+
+        if (newLeadHeardFilter !== 'all') {
+            params.kanban_new_lead_heard_source = newLeadHeardFilter;
+        }
+
+        if (formFilter !== 'all') {
+            params.kanban_form_id = formFilter;
+        }
+
+        return params;
+    }, [formFilter, newLeadSourceFilter, newLeadHeardFilter]);
+
+    const clearNewLeadColumnFilters = () => {
+        setNewLeadSourceFilter('all');
+        setNewLeadHeardFilter('all');
+    };
+
+    const clearFormsColumnFilter = () => {
+        setFormFilter('all');
+    };
+
     const toggleSelectLead = (leadId) => {
         setSelectAllInDb(false); // Manually selecting disables "select all in DB" mode
         setSelectedLeads(prev => {
@@ -308,10 +340,6 @@ const LeadsKanban = () => {
         setSelectedLeads(new Set()); // Clear individual selections when selecting all in DB
     };
 
-    const toggleSelectAllInDb = () => {
-        setSelectAllInDb(!selectAllInDb);
-    };
-
     const getFilterParams = () => {
         const params = {};
         if (debouncedSearch) params.search = debouncedSearch;
@@ -322,6 +350,8 @@ const LeadsKanban = () => {
         if (archivedFilter === 'archived') params.archived_only = 'true';
         if (archivedFilter === 'all') params.show_archived = 'true';
         if (callFilter !== 'all') params.is_called = callFilter;
+        if (sourceTypeFilter !== 'all') params.source_type = sourceTypeFilter;
+        if (heardSourceFilter !== 'all') params.heard_source = heardSourceFilter;
         return params;
     };
 
@@ -408,7 +438,9 @@ const LeadsKanban = () => {
     const loadData = async (signal) => {
         if (columns.length === 0) setLoading(true);
         try {
-            const params = {};
+            const params = {
+                ...getKanbanLocalFilterParams()
+            };
             if (debouncedSearch) params.search = debouncedSearch;
             if (dateFrom) params.date_from = dateFrom;
             if (dateTo) params.date_to = dateTo;
@@ -417,6 +449,8 @@ const LeadsKanban = () => {
             if (archivedFilter === 'archived') params.archived_only = 'true';
             if (archivedFilter === 'all') params.show_archived = 'true';
             if (callFilter !== 'all') params.is_called = callFilter;
+            if (sourceTypeFilter !== 'all') params.source_type = sourceTypeFilter;
+            if (heardSourceFilter !== 'all') params.heard_source = heardSourceFilter;
 
             const [kanbanRes, statsRes] = await Promise.all([
                 leadService.getKanban(params, { signal }),
@@ -515,7 +549,11 @@ const LeadsKanban = () => {
 
         try {
             const nextPage = (col.page || 1) + 1;
-            const params = { stage_id: columnId, page: nextPage };
+            const params = {
+                stage_id: columnId,
+                page: nextPage,
+                ...getKanbanLocalFilterParams()
+            };
             if (debouncedSearch) params.search = debouncedSearch;
             if (dateFrom) params.date_from = dateFrom;
             if (dateTo) params.date_to = dateTo;
@@ -524,6 +562,8 @@ const LeadsKanban = () => {
             if (archivedFilter === 'archived') params.archived_only = 'true';
             if (archivedFilter === 'all') params.show_archived = 'true';
             if (callFilter !== 'all') params.is_called = callFilter;
+            if (sourceTypeFilter !== 'all') params.source_type = sourceTypeFilter;
+            if (heardSourceFilter !== 'all') params.heard_source = heardSourceFilter;
 
             const res = await leadService.loadMoreKanban(params);
 
@@ -549,7 +589,7 @@ const LeadsKanban = () => {
         } finally {
             loadingMoreRef.current[columnId] = false;
         }
-    }, [columns, debouncedSearch, dateFrom, dateTo, operatorFilter, followUpFilter, archivedFilter, callFilter]);
+    }, [columns, debouncedSearch, dateFrom, dateTo, operatorFilter, followUpFilter, archivedFilter, callFilter, sourceTypeFilter, heardSourceFilter, getKanbanLocalFilterParams]);
 
     // Ustun scroll handler
     const handleColumnScroll = useCallback((e, columnId) => {
@@ -567,7 +607,7 @@ const LeadsKanban = () => {
             controller.abort();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshTrigger, debouncedSearch, dateFrom, dateTo, operatorFilter, followUpFilter, archivedFilter, callFilter]);
+    }, [refreshTrigger, debouncedSearch, dateFrom, dateTo, operatorFilter, followUpFilter, archivedFilter, callFilter, sourceTypeFilter, heardSourceFilter, formFilter, newLeadSourceFilter, newLeadHeardFilter]);
 
     // Drag auto-scroll: useEffect bilan document level da ishlaydi
     useEffect(() => {
@@ -888,6 +928,30 @@ const LeadsKanban = () => {
                             <option value="planned">📅 Rejalashtirilgan</option>
                             <option value="none">⚪ Belgilanmagan</option>
                         </select>
+
+                        <select
+                            className="toolbar-select"
+                            value={sourceTypeFilter}
+                            onChange={(e) => setSourceTypeFilter(e.target.value)}
+                        >
+                            <option value="all">Manba (Barchasi)</option>
+                            <option value="manual">✍️ Qo'lda kiritilgan</option>
+                            <option value="form">📄 Forma orqali</option>
+                            <option value="import">🤖 Telegram (Userbot)</option>
+                        </select>
+
+                        <select
+                            className="toolbar-select"
+                            value={heardSourceFilter}
+                            onChange={(e) => setHeardSourceFilter(e.target.value)}
+                        >
+                            <option value="all">Qayerdan eshitgan (Barchasi)</option>
+                            <option value="Telegramda">Telegramda</option>
+                            <option value="Instagramda">Instagramda</option>
+                            <option value="YouTubeda">YouTubeda</option>
+                            <option value="Odamlar orasida">Odamlar orasida</option>
+                            <option value="Xech qayerda">Xech qayerda</option>
+                        </select>
                     </div>
 
                     <button className="btn-v2 btn-v2-dark" onClick={loadData}>
@@ -999,6 +1063,8 @@ const LeadsKanban = () => {
                                 if (archivedFilter === 'archived') params.archived_only = 'true';
                                 if (archivedFilter === 'all') params.show_archived = 'true';
                                 if (callFilter !== 'all') params.is_called = callFilter;
+                                if (sourceTypeFilter !== 'all') params.source_type = sourceTypeFilter;
+                                if (heardSourceFilter !== 'all') params.heard_source = heardSourceFilter;
 
                                 const response = await leadService.exportExcel(params);
                                 const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -1051,30 +1117,110 @@ const LeadsKanban = () => {
                                 onDragLeave={handleDragLeave}
                                 onDrop={(e) => handleDrop(e, col.id)}
                             >
-                                <div className="column-header">
-                                    <div className="column-title">
-                                        <span className="title-text">{col.name}</span>
-                                        <span className="item-count">
-                                            {(col.name.toLowerCase() === 'formalar' && formFilter !== 'all')
-                                                ? col.items?.filter(l => l.source_form === parseInt(formFilter)).length
-                                                : (col.total_count || col.items?.length || 0)
-                                            }
-                                        </span>
-                                    </div>
-                                    {col.name.toLowerCase() === 'formalar' && (
-                                        <select
-                                            className="column-filter-select"
-                                            value={formFilter}
-                                            onChange={(e) => setFormFilter(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <option value="all">Barcha formalar</option>
-                                            {availableForms.map(f => (
-                                                <option key={f.id} value={f.id}>{f.name}</option>
-                                            ))}
-                                        </select>
-                                    )}
-                                </div>
+                                {(() => {
+                                    const isFormsColumn = (col.key || '').toLowerCase() === 'forms' || (col.name || '').toLowerCase() === 'formalar';
+                                    const isNewLeadColumn = (col.key || '').toLowerCase() === 'new-lead';
+                                    const visibleItems = getVisibleColumnItems(col);
+                                    const columnTotalCount = typeof col.total_count === 'number' ? col.total_count : visibleItems.length;
+                                    const hasLocalFilters = (
+                                        (isNewLeadColumn && (newLeadSourceFilter !== 'all' || newLeadHeardFilter !== 'all')) ||
+                                        (isFormsColumn && formFilter !== 'all')
+                                    );
+
+                                    return (
+                                        <>
+                                            <div className="column-header">
+                                                <div className="column-title">
+                                                    <span className="title-text">{col.name}</span>
+                                                    <span className="item-count">
+                                                        {columnTotalCount}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {(isFormsColumn || isNewLeadColumn) && (
+                                                <div className={`column-local-filters ${isNewLeadColumn ? 'is-new-lead' : 'is-forms'}`}>
+                                                    <div className="column-local-filters-header">
+                                                        <span className="column-local-filters-title">
+                                                            {isNewLeadColumn ? 'Yangi lead filtri' : 'Forma filtri'}
+                                                        </span>
+                                                        {hasLocalFilters && (
+                                                            <button
+                                                                type="button"
+                                                                className="column-filter-clear-btn"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (isNewLeadColumn) {
+                                                                        clearNewLeadColumnFilters();
+                                                                    } else {
+                                                                        clearFormsColumnFilter();
+                                                                    }
+                                                                }}
+                                                            >
+                                                                Tozalash
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={`column-filter-grid ${isNewLeadColumn ? 'is-new-lead' : 'is-forms'}`}>
+                                                        {isFormsColumn && (
+                                                            <div className="column-filter-field">
+                                                                <label>Forma</label>
+                                                                <select
+                                                                    className="column-filter-select"
+                                                                    value={formFilter}
+                                                                    onChange={(e) => setFormFilter(e.target.value)}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <option value="all">Barcha formalar</option>
+                                                                    {availableForms.map(f => (
+                                                                        <option key={f.id} value={f.id}>{f.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {isNewLeadColumn && (
+                                                            <>
+                                                                <div className="column-filter-field">
+                                                                    <label>Manba</label>
+                                                                    <select
+                                                                        className="column-filter-select"
+                                                                        value={newLeadSourceFilter}
+                                                                        onChange={(e) => setNewLeadSourceFilter(e.target.value)}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <option value="all">Barchasi</option>
+                                                                        <option value="manual">Qo'lda kiritilgan</option>
+                                                                        <option value="form">Forma orqali</option>
+                                                                        <option value="import">Telegram (Userbot)</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div className="column-filter-field">
+                                                                    <label>Qayerdan eshitgan</label>
+                                                                    <select
+                                                                        className="column-filter-select"
+                                                                        value={newLeadHeardFilter}
+                                                                        onChange={(e) => setNewLeadHeardFilter(e.target.value)}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <option value="all">Barchasi</option>
+                                                                        <option value="Telegramda">Telegramda</option>
+                                                                        <option value="Instagramda">Instagramda</option>
+                                                                        <option value="YouTubeda">YouTubeda</option>
+                                                                        <option value="Odamlar orasida">Odamlar orasida</option>
+                                                                        <option value="Xech qayerda">Xech qayerda</option>
+                                                                    </select>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
 
                                 {quickAddColumn === col.id ? (
                                     <div className="quick-add-wrapper slide-down">
@@ -1100,12 +1246,7 @@ const LeadsKanban = () => {
                                     className="column-items"
                                     onScroll={(e) => handleColumnScroll(e, col.id)}
                                 >
-                                    {col.items?.filter(lead => {
-                                        if (col.name.toLowerCase() === 'formalar' && formFilter !== 'all') {
-                                            return lead.source_form === parseInt(formFilter);
-                                        }
-                                        return true;
-                                    }).map(lead => (
+                                    {getVisibleColumnItems(col).map(lead => (
                                         <LeadCard
                                             key={lead.id}
                                             lead={lead}
@@ -1120,11 +1261,15 @@ const LeadsKanban = () => {
                                             onToggleSelect={toggleSelectLead}
                                         />
                                     ))}
-                                    {(!col.items || col.items.length === 0) && (
-                                        <div className="empty-column">
-                                            <span>Lead yo'q</span>
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const visibleItems = getVisibleColumnItems(col);
+                                        const columnTotalCount = typeof col.total_count === 'number' ? col.total_count : visibleItems.length;
+                                        return columnTotalCount === 0 ? (
+                                            <div className="empty-column">
+                                                <span>Lead yo'q</span>
+                                            </div>
+                                        ) : null;
+                                    })()}
                                     {col.loadingMore && (
                                         <div className="load-more-spinner">
                                             <div className="spinner-small"></div>
@@ -1133,7 +1278,7 @@ const LeadsKanban = () => {
                                     )}
                                     {col.has_more && !col.loadingMore && (
                                         <div className="load-more-hint">
-                                            <span>Pastga suring — yana {col.total_count - (col.items?.length || 0)} ta</span>
+                                            <span>Pastga suring - yana {Math.max((typeof col.total_count === 'number' ? col.total_count : (col.items?.length || 0)) - (col.items?.length || 0), 0)} ta</span>
                                         </div>
                                     )}
                                 </div>

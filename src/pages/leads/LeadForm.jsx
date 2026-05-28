@@ -140,6 +140,7 @@ const LeadForm = ({ isOpen, onClose, lead, initialStageId, onSuccess }) => {
         notes: '',
         is_considering: false,
         operator: '',
+        heard_source: 'Xech qayerda',
     });
 
 
@@ -189,6 +190,7 @@ const LeadForm = ({ isOpen, onClose, lead, initialStageId, onSuccess }) => {
                     notes: lead.notes || '',
                     is_considering: lead.is_considering || false,
                     operator: (lead.operator?.id || lead.operator || '').toString(),
+                    heard_source: lead.heard_source || 'Xech qayerda',
                 });
             } else {
                 setFormData({
@@ -202,6 +204,7 @@ const LeadForm = ({ isOpen, onClose, lead, initialStageId, onSuccess }) => {
                     notes: '',
                     is_considering: false,
                     operator: '',
+                    heard_source: 'Xech qayerda',
                 });
             }
         }
@@ -294,6 +297,7 @@ const LeadForm = ({ isOpen, onClose, lead, initialStageId, onSuccess }) => {
             }
 
             data.append('notes', formData.notes);
+            data.append('heard_source', formData.heard_source);
 
             if (isSuperUser && formData.operator) {
                 data.append('operator', formData.operator);
@@ -529,6 +533,26 @@ const LeadForm = ({ isOpen, onClose, lead, initialStageId, onSuccess }) => {
                                     </select>
                                 </div>
                             )}
+                        </div>
+
+                        <div className="form-row two-cols">
+                            <div className="form-group">
+                                <label>Qayerdan eshitgan</label>
+                                <select
+                                    name="heard_source"
+                                    value={formData.heard_source}
+                                    onChange={handleChange}
+                                >
+                                    <option value="Xech qayerda">Xech qayerda</option>
+                                    <option value="Telegramda">Telegramda</option>
+                                    <option value="Instagramda">Instagramda</option>
+                                    <option value="YouTubeda">YouTubeda</option>
+                                    <option value="Odamlar orasida">Odamlar orasida</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                {/* Space for future fields */}
+                            </div>
                         </div>
 
                         <div className="form-group">
