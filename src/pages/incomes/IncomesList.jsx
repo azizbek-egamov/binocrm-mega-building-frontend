@@ -285,19 +285,19 @@ const IncomesList = () => {
                                         type="text"
                                         placeholder="Qidirish..."
                                         value={search}
-                                        onChange={(e) => { setSearch(e.target.value); setPagination(prev => ({...prev, page: 1})); }}
+                                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                     />
                                 </div>
-                                <select className="filter-select" value={buildingFilter} onChange={(e) => setBuildingFilter(e.target.value)}>
+                                <select className="filter-select" value={buildingFilter} onChange={(e) => { setBuildingFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha binolar</option>
                                     {Array.isArray(buildings) && buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                 </select>
-                                <select className="filter-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                                <select className="filter-select" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha kategoriyalar</option>
                                     {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                                 {users.length > 0 && (
-                                    <select className="filter-select" value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
+                                    <select className="filter-select" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
                                         <option value="">Foydalanuvchi</option>
                                         {users.map(u => (
                                             <option key={u.id} value={u.id}>
@@ -363,22 +363,22 @@ const IncomesList = () => {
                                 </div>
                             )}
 
-                            {pagination.totalPages > 1 && (
+                             {totalPages > 1 && (
                                 <div style={{display: 'flex', justifyContent: 'center', marginTop: '24px', gap: '12px', alignItems: 'center'}}>
                                     <button 
                                         className="btn-secondary" 
-                                        disabled={pagination.page === 1}
-                                        onClick={() => setPagination(prev => ({...prev, page: prev.page - 1}))}
+                                        disabled={page === 1}
+                                        onClick={() => setPage(prev => prev - 1)}
                                     >
                                         <ChevronLeftIcon />
                                     </button>
                                     <span style={{fontSize: '14px', fontWeight: 600}}>
-                                        {pagination.page} / {pagination.totalPages}
+                                        {page} / {totalPages}
                                     </span>
                                     <button 
                                         className="btn-secondary" 
-                                        disabled={pagination.page === pagination.totalPages}
-                                        onClick={() => setPagination(prev => ({...prev, page: prev.page + 1}))}
+                                        disabled={page === totalPages}
+                                        onClick={() => setPage(prev => prev + 1)}
                                     >
                                         <ChevronRightIcon />
                                     </button>
@@ -391,7 +391,7 @@ const IncomesList = () => {
                 <DateRangeFilter 
                     onFilter={(range) => {
                         setDateRange(range);
-                        setPagination(prev => ({ ...prev, page: 1 }));
+                        setPage(1);
                     }}
                     initialRange={dateRange}
                 />
