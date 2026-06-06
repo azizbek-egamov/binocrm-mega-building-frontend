@@ -3,6 +3,7 @@ import api from './api';
 const expensesService = {
     // Expenses
     getExpenses: async (params) => (await api.get('/expenses/', { params })).data,
+    getStatistics: async (params) => (await api.get('/expenses/statistics/', { params })).data,
     getExpense: async (id) => (await api.get(`/expenses/${id}/`)).data,
     createExpense: async (data) => (await api.post('/expenses/', data)).data,
     updateExpense: async (id, data) => (await api.put(`/expenses/${id}/`, data)).data,

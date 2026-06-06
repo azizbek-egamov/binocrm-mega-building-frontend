@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import expensesService from '../../services/expenses';
 import { toast } from 'sonner';
 import './Expenses.css';
@@ -39,6 +40,7 @@ const AVAILABLE_COLORS = [
 ];
 
 const ExpenseCategories = () => {
+    const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -226,7 +228,7 @@ const ExpenseCategories = () => {
                                 </thead>
                                 <tbody>
                                     {filteredCategories.map((category) => (
-                                        <tr key={category.id} onClick={() => openEditModal(category)} style={{ cursor: 'pointer' }}>
+                                        <tr key={category.id} onClick={() => navigate(`/expense-categories/${category.id}`)} style={{ cursor: 'pointer' }}>
                                             <td>
                                                 <div className={`category-icon-box small ${category.color}`}>
                                                     {getIconComponent(category.icon)}
@@ -249,7 +251,7 @@ const ExpenseCategories = () => {
                                             <td>
                                                 <div className="cell-actions" style={{ justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
                                                     <div className="table-actions">
-                                                        <button className="btn-icon btn-edit" title="Tahrirlash" onClick={() => openEditModal(category)}>
+                                                        <button className="btn-icon btn-edit" title="Tahrirlash" onClick={() => navigate(`/expense-categories/${category.id}`)}>
                                                             <EditIcon />
                                                         </button>
                                                         <button className="btn-icon btn-delete" title="O'chirish" onClick={() => openDeleteModal(category)}>

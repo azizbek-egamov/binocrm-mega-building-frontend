@@ -10,6 +10,10 @@ const incomesService = {
         const response = await api.post('/income-categories/', data);
         return response.data;
     },
+    getCategory: async (id) => {
+        const response = await api.get(`/income-categories/${id}/`);
+        return response.data;
+    },
     updateCategory: async (id, data) => {
         const response = await api.patch(`/income-categories/${id}/`, data);
         return response.data;
@@ -22,6 +26,10 @@ const incomesService = {
     // Incomes
     getIncomes: async (params = {}) => {
         const response = await api.get('/incomes/', { params });
+        return response.data;
+    },
+    getStatistics: async (params = {}) => {
+        const response = await api.get('/incomes/statistics/', { params });
         return response.data;
     },
     createIncome: async (data) => {

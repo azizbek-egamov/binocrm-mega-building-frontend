@@ -30,6 +30,7 @@ const BuildingExpenses = () => {
     const [endDate, setEndDate] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
     const [filterUser, setFilterUser] = useState('');
+    const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
 
     // Filter Options
     const [categories, setCategories] = useState([]);
@@ -99,12 +100,12 @@ const BuildingExpenses = () => {
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [startDate, endDate, filterCategory, filterUser, activeTab, expensesPage]);
+    }, [startDate, endDate, filterCategory, filterUser, filterPaymentMethod, activeTab, expensesPage]);
 
     // Reset page when filters change
     useEffect(() => {
         setExpensesPage(1);
-    }, [startDate, endDate, filterCategory, filterUser]);
+    }, [startDate, endDate, filterCategory, filterUser, filterPaymentMethod]);
 
     const loadBaseData = async () => {
         try {
@@ -147,7 +148,8 @@ const BuildingExpenses = () => {
                 start_date: startDate || undefined,
                 end_date: endDate || undefined,
                 category: filterCategory || undefined,
-                user: filterUser || undefined
+                user: filterUser || undefined,
+                payment_method: filterPaymentMethod || undefined
             };
 
             const data = await expensesService.getExpenses(params);
@@ -158,16 +160,6 @@ const BuildingExpenses = () => {
             } else {
                 setExpensesTotalPages(1);
             }
-
-            // Extract unique users from the loaded expenses if we don't have a users endpoint
-            // This is a simple workaround to populate the users filter
-            const uniqueUsers = {};
-            (data.results || data).forEach(item => {
-                if (item.created_by && item.created_by_name) {
-                    uniqueUsers[item.created_by] = item.created_by_name; // created_by is ID
-                }
-            });
-            setUsers(Object.entries(uniqueUsers).map(([id, name]) => ({ id, name })));
 
         } catch (err) {
             console.error(err);
@@ -188,7 +180,8 @@ const BuildingExpenses = () => {
             const params = overrideParams || {
                 start_date: startDate || undefined,
                 end_date: endDate || undefined,
-                user: filterUser || undefined
+                user: filterUser || undefined,
+                payment_method: filterPaymentMethod || undefined
             };
 
             const data = await expensesService.getBuildingStats(building.id, params);
@@ -442,8 +435,16 @@ const BuildingExpenses = () => {
                                         <option key={u.id} value={u.id}>{u.name}</option>
                                     ))}
                                 </select>
+                                <select
+                                    value={filterPaymentMethod}
+                                    onChange={(e) => setFilterPaymentMethod(e.target.value)}
+                                >
+                                    <option value="">Barcha to'lov turlari</option>
+                                    <option value="cash">Naqd pul</option>
+                                    <option value="bank">Bank/Karta</option>
+                                </select>
 
-                                {(startDate || endDate || filterCategory || filterUser) && (
+                                {(startDate || endDate || filterCategory || filterUser || filterPaymentMethod) && (
                                     <button
                                         className="btn-filter-clear"
                                         onClick={() => {
@@ -451,6 +452,7 @@ const BuildingExpenses = () => {
                                             setEndDate('');
                                             setFilterCategory('');
                                             setFilterUser('');
+                                            setFilterPaymentMethod('');
                                         }}
                                     >
                                         <CloseIcon style={{ width: 16, height: 16 }} />
@@ -477,6 +479,7 @@ const BuildingExpenses = () => {
                                                             <th>Sana</th>
                                                             <th>Kategoriya</th>
                                                             <th>Tavsif</th>
+                                                            <th>To'lov turi</th>
                                                             <th>Summa</th>
                                                             <th>Kim tomonidan</th>
                                                         </tr>
@@ -493,6 +496,15 @@ const BuildingExpenses = () => {
                                                                     ) : '-'}
                                                                 </td>
                                                                 <td>{item.description}</td>
+                                                                <td>
+                                                                    {item.payment_method === 'cash' ? (
+                                                                        <span className="status-badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Naqd</span>
+                                                                    ) : item.payment_method === 'bank' ? (
+                                                                        <span className="status-badge bg-blue-500/20 text-blue-400 border border-blue-500/30">Bank/Karta</span>
+                                                                    ) : (
+                                                                        <span className="text-slate-500">-</span>
+                                                                    )}
+                                                                </td>
                                                                 <td style={{ fontWeight: '500' }}>{formatPrice(item.amount)}</td>
                                                                 <td>{item.created_by_name || '-'}</td>
                                                             </tr>

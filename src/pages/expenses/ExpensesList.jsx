@@ -29,26 +29,28 @@ const ExpensesList = () => {
     const [categoryFilter, setCategoryFilter] = useState('');
     const [users, setUsers] = useState([]);
     const [userFilter, setUserFilter] = useState('');
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [stats, setStats] = useState({ total: 0, count: 0, avg: 0 });
     
-    const [pagination, setPagination] = useState({
-        count: 0,
-        page: 1,
-        pageSize: 20,
-        totalPages: 1
-    });
-
     const [modal, setModal] = useState({ open: false, type: null, item: null });
     const [modalClosing, setModalClosing] = useState(false);
     const [saving, setSaving] = useState(false);
     
+    // Expenses state
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 15;
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
     const [formData, setFormData] = useState({
         building: '',
         category: '',
         description: '',
         amount: '',
         date: new Date().toISOString().split('T')[0],
-        note: ''
+        note: '',
+        payment_method: ''
     });
 
     useEffect(() => {
@@ -57,7 +59,7 @@ const ExpensesList = () => {
 
     useEffect(() => {
         loadExpenses();
-    }, [pagination.page, search, buildingFilter, categoryFilter, userFilter, dateRange]);
+    }, [page, search, buildingFilter, categoryFilter, userFilter, paymentMethodFilter, dateRange]);
 
     const loadBaseData = async () => {
         try {
@@ -77,26 +79,31 @@ const ExpensesList = () => {
     const loadExpenses = async () => {
         try {
             setLoading(true);
-            const params = {
-                page: pagination.page,
-                page_size: pagination.pageSize,
-                building_id: buildingFilter,
-                category_id: categoryFilter,
+            const filterParams = {
+                building: buildingFilter,
+                category: categoryFilter,
                 user: userFilter,
+                payment_method: paymentMethodFilter || undefined,
                 search: search,
                 start_date: dateRange.start,
                 end_date: dateRange.end
             };
-            const data = await expensesService.getExpenses(params);
+            const pageParams = { ...filterParams, page: page, page_size: pageSize };
+            const [data, statsData] = await Promise.all([
+                expensesService.getExpenses(pageParams),
+                expensesService.getStatistics(filterParams)
+            ]);
             setExpenses(data.results || data);
+            // stats.count = barcha filtr bo'yicha umumiy son (paginatsiyasiz)
+            setStats(prev => ({ ...statsData, count: data.count || 0 }));
             
-            const totalCount = data.count || (data.results ? data.results.length : data.length) || 0;
-            setPagination(prev => ({
-                ...prev,
-                count: totalCount,
-                totalPages: Math.ceil(totalCount / prev.pageSize) || 1
-            }));
+            const count = data.count || (data.results ? data.results.length : data.length) || 0;
+            setTotalCount(count);
         } catch (err) {
+            if (err.response && err.response.status === 404 && page > 1) {
+                setPage(1);
+                return;
+            }
             toast.error("Xarajatlar yuklanmadi");
         } finally {
             setLoading(false);
@@ -111,7 +118,8 @@ const ExpensesList = () => {
                 description: item.description,
                 amount: item.amount,
                 date: item.date,
-                note: item.note || ''
+                note: item.note || '',
+                payment_method: item.payment_method || ''
             });
         } else {
             setFormData({
@@ -120,7 +128,8 @@ const ExpensesList = () => {
                 description: '',
                 amount: '',
                 date: new Date().toISOString().split('T')[0],
-                note: ''
+                note: '',
+                payment_method: ''
             });
         }
         setModal({ open: true, type, item });
@@ -176,6 +185,10 @@ const ExpensesList = () => {
         }
     };
 
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('uz-UZ').format(amount) + " so'm";
+    };
+
     return (
         <div className="expenses-page" style={{ padding: '24px' }}>
             <div className="page-header" style={{ marginBottom: '32px' }}>
@@ -193,6 +206,35 @@ const ExpensesList = () => {
 
             <div className="layout-with-sidebar">
                 <div className="main-view-area">
+                    <div className="kpi-grid" style={{ marginBottom: '24px' }}>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper warning">
+                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4"></path></svg>
+                            </div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">Jami Chiqim</span>
+                                <h3 className="kpi-value">{formatCurrency(stats.total)}</h3>
+                            </div>
+                        </div>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper primary">
+                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">Tranzaksiyalar soni</span>
+                                <h3 className="kpi-value">{stats.count} ta</h3>
+                            </div>
+                        </div>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper info">
+                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">O'rtacha chiqim</span>
+                                <h3 className="kpi-value">{formatCurrency(Math.round(stats.avg))}</h3>
+                            </div>
+                        </div>
+                    </div>
                     <div className="expenses-main" style={{ minHeight: 'calc(100vh - 180px)', border: '1px solid var(--filter-border)', borderRadius: '24px', overflow: 'hidden', background: 'var(--bg-primary)', boxShadow: 'var(--filter-shadow)' }}>
                         <div className="main-header" style={{ padding: '24px', borderBottom: '1px solid var(--filter-border)' }}>
                             <div className="filters-container" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -202,16 +244,21 @@ const ExpensesList = () => {
                                         type="text"
                                         placeholder="Qidirish..."
                                         value={search}
-                                        onChange={(e) => { setSearch(e.target.value); setPagination(prev => ({...prev, page: 1})); }}
+                                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                     />
                                 </div>
-                                <select className="filter-select" value={buildingFilter} onChange={(e) => setBuildingFilter(e.target.value)}>
+                                <select className="filter-select" value={buildingFilter} onChange={(e) => { setBuildingFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha binolar</option>
                                     {Array.isArray(buildings) && buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                 </select>
-                                <select className="filter-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                                <select className="filter-select" value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}>
                                     <option value="">Kategoriya</option>
                                     {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                                <select className="filter-select" value={paymentMethodFilter} onChange={(e) => { setPaymentMethodFilter(e.target.value); setPage(1); }}>
+                                    <option value="">Barcha to'lov turlari</option>
+                                    <option value="cash">Naqd pul</option>
+                                    <option value="bank">Bank/Karta</option>
                                 </select>
                             </div>
                         </div>
@@ -234,12 +281,13 @@ const ExpensesList = () => {
                                                 <th>Bino</th>
                                                 <th>Kategoriya</th>
                                                 <th>Tavsif</th>
+                                                <th>To'lov turi</th>
                                                 <th>Summa</th>
                                                 <th style={{textAlign: 'right'}}>Amallar</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {expenses.map(item => (
+                                             {expenses.map(item => (
                                                 <tr key={item.id} onClick={() => openModal('edit', item)} style={{ cursor: 'pointer' }}>
                                                     <td>{item.date}</td>
                                                     <td style={{fontWeight: 600}}>{item.building_name}</td>
@@ -249,6 +297,15 @@ const ExpensesList = () => {
                                                         </span>
                                                     </td>
                                                     <td>{item.description}</td>
+                                                    <td>
+                                                        {item.payment_method === 'cash' ? (
+                                                            <span className="category-badge border-emerald-500/30 text-emerald-400 bg-emerald-500/20">Naqd</span>
+                                                        ) : item.payment_method === 'bank' ? (
+                                                            <span className="category-badge border-blue-500/30 text-blue-400 bg-blue-500/20">Bank/Karta</span>
+                                                        ) : (
+                                                            <span className="text-slate-500">-</span>
+                                                        )}
+                                                    </td>
                                                     <td style={{fontWeight: 700, color: '#ef4444'}}>
                                                         {new Intl.NumberFormat('uz-UZ').format(item.amount)} so'm
                                                     </td>
@@ -259,28 +316,28 @@ const ExpensesList = () => {
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
                             )}
 
-                            {pagination.totalPages > 1 && (
+                            {totalPages > 1 && (
                                 <div style={{display: 'flex', justifyContent: 'center', marginTop: '24px', gap: '12px', alignItems: 'center'}}>
                                     <button 
                                         className="btn-secondary" 
-                                        disabled={pagination.page === 1}
-                                        onClick={() => setPagination(prev => ({...prev, page: prev.page - 1}))}
+                                        disabled={page === 1}
+                                        onClick={() => setPage(prev => prev - 1)}
                                     >
                                         <ChevronLeftIcon />
                                     </button>
                                     <span style={{fontSize: '14px', fontWeight: 600}}>
-                                        {pagination.page} / {pagination.totalPages}
+                                        {page} / {totalPages}
                                     </span>
                                     <button 
                                         className="btn-secondary" 
-                                        disabled={pagination.page === pagination.totalPages}
-                                        onClick={() => setPagination(prev => ({...prev, page: prev.page + 1}))}
+                                        disabled={page === totalPages}
+                                        onClick={() => setPage(prev => prev + 1)}
                                     >
                                         <ChevronRightIcon />
                                     </button>
@@ -293,7 +350,7 @@ const ExpensesList = () => {
                 <DateRangeFilter 
                     onFilter={(range) => {
                         setDateRange(range);
-                        setPagination(prev => ({ ...prev, page: 1 }));
+                        setPage(1);
                     }}
                     initialRange={dateRange}
                 />
@@ -337,6 +394,14 @@ const ExpensesList = () => {
                                     <label>Sana</label>
                                     <input type="date" className="filter-input" style={{width: '100%'}} value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
                                 </div>
+                            </div>
+                             <div className="form-group" style={{marginBottom: '16px'}}>
+                                <label>To'lov turi</label>
+                                <select value={formData.payment_method} onChange={(e) => setFormData({...formData, payment_method: e.target.value})} className="filter-select" style={{width: '100%'}}>
+                                    <option value="">Tanlanmagan</option>
+                                    <option value="cash">Naqd pul</option>
+                                    <option value="bank">Bank hisobi/Karta</option>
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>Izoh</label>

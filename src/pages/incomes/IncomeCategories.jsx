@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import incomesService from '../../services/incomes';
 import { toast } from 'sonner';
 import './Incomes.css';
@@ -31,6 +32,7 @@ const AVAILABLE_COLORS = [
 ];
 
 const IncomeCategories = () => {
+    const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -209,7 +211,7 @@ const IncomeCategories = () => {
                                 </thead>
                                 <tbody>
                                     {Array.isArray(filteredCategories) && filteredCategories.map(item => (
-                                        <tr key={item.id} onClick={() => openEditModal(item)} style={{cursor: 'pointer'}}>
+                                        <tr key={item.id} onClick={() => navigate(`/incomes/categories/${item.id}`)} style={{cursor: 'pointer'}}>
                                             <td>
                                                 <div className={`category-badge ${item.color}`} style={{padding: '8px', borderRadius: '10px'}}>
                                                     {getIconComponent(item.icon)}
@@ -225,7 +227,7 @@ const IncomeCategories = () => {
                                             </td>
                                             <td style={{textAlign: 'right'}}>
                                                 <div style={{display: 'flex', gap: '8px', justifyContent: 'flex-end'}} onClick={e => e.stopPropagation()}>
-                                                    <button className="btn-icon" style={{color: '#6366f1'}} onClick={() => openEditModal(item)}><EditIcon /></button>
+                                                    <button className="btn-icon" style={{color: '#6366f1'}} onClick={() => navigate(`/incomes/categories/${item.id}`)}><EditIcon /></button>
                                                     <button className="btn-icon" style={{color: '#ef4444'}} onClick={() => openDeleteModal(item)}><TrashIcon /></button>
                                                 </div>
                                             </td>

@@ -132,7 +132,7 @@ const BuildingIncomes = () => {
                 page_size: INCOMES_PAGE_SIZE,
                 start_date: startDate || undefined,
                 end_date: endDate || undefined,
-                category: filterCategory || undefined,
+                category_id: filterCategory || undefined,
                 user: filterUser || undefined
             };
             const data = await incomesService.getIncomes(params);
@@ -140,15 +140,6 @@ const BuildingIncomes = () => {
             if (data.count) {
                 setIncomesTotalPages(Math.ceil(data.count / INCOMES_PAGE_SIZE));
             }
-
-            // Extract users for filter
-            const uniqueUsers = {};
-            (data.results || data).forEach(item => {
-                if (item.created_by && item.created_by_name) {
-                    uniqueUsers[item.created_by] = item.created_by_name;
-                }
-            });
-            setUsers(Object.entries(uniqueUsers).map(([id, name]) => ({ id, name })));
         } catch (err) {
             toast.error("Kirimlarni yuklashda xatolik");
         } finally {

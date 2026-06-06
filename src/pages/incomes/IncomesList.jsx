@@ -31,13 +31,12 @@ const IncomesList = () => {
     const [users, setUsers] = useState([]);
     const [userFilter, setUserFilter] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [stats, setStats] = useState({ total: 0, count: 0, avg: 0 });
     
-    const [pagination, setPagination] = useState({
-        count: 0,
-        page: 1,
-        pageSize: 20,
-        totalPages: 1
-    });
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const pageSize = 15;
+    const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
     const formatPhone = (phone) => {
         if (!phone) return '-';
@@ -70,7 +69,7 @@ const IncomesList = () => {
 
     useEffect(() => {
         loadIncomes();
-    }, [pagination.page, search, buildingFilter, categoryFilter, userFilter, dateRange]);
+    }, [page, search, buildingFilter, categoryFilter, userFilter, dateRange]);
 
     const loadBaseData = async () => {
         try {
@@ -98,9 +97,7 @@ const IncomesList = () => {
     const loadIncomes = async () => {
         try {
             setLoading(true);
-            const params = {
-                page: pagination.page,
-                page_size: pagination.pageSize,
+            const filterParams = {
                 building_id: buildingFilter,
                 category_id: categoryFilter,
                 user: userFilter,
@@ -108,16 +105,22 @@ const IncomesList = () => {
                 start_date: dateRange.start,
                 end_date: dateRange.end
             };
-            const data = await incomesService.getIncomes(params);
+            const pageParams = { ...filterParams, page: page, page_size: pageSize };
+            const [data, statsData] = await Promise.all([
+                incomesService.getIncomes(pageParams),
+                incomesService.getStatistics(filterParams)
+            ]);
             setIncomes(data.results || data);
+            // Tranzaksiyalar soni = backend-dan kelgan umumiy count (barcha sahifalar uchun)
+            setStats(prev => ({ ...statsData, count: data.count || 0 }));
             
-            const totalCount = data.count || (data.results ? data.results.length : data.length) || 0;
-            setPagination(prev => ({
-                ...prev,
-                count: totalCount,
-                totalPages: Math.ceil(totalCount / prev.pageSize) || 1
-            }));
+            const count = data.count || (data.results ? data.results.length : data.length) || 0;
+            setTotalCount(count);
         } catch (err) {
+            if (err.response && err.response.status === 404 && page > 1) {
+                setPage(1);
+                return;
+            }
             toast.error("Kirimlar yuklanmadi");
         } finally {
             setLoading(false);
@@ -246,6 +249,33 @@ const IncomesList = () => {
 
             <div className="layout-with-sidebar">
                 <div className="main-view-area">
+                    <div className="kpi-grid" style={{ marginBottom: '24px' }}>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper success"><WalletIcon /></div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">Jami Kirim</span>
+                                <h3 className="kpi-value">{formatCurrency(stats.total)}</h3>
+                            </div>
+                        </div>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper primary">
+                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">Tranzaksiyalar soni</span>
+                                <h3 className="kpi-value">{stats.count} ta</h3>
+                            </div>
+                        </div>
+                        <div className="kpi-card">
+                            <div className="kpi-icon-wrapper info">
+                                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <div className="kpi-info">
+                                <span className="kpi-label">O'rtacha kirim</span>
+                                <h3 className="kpi-value">{formatCurrency(Math.round(stats.avg))}</h3>
+                            </div>
+                        </div>
+                    </div>
                     <div className="incomes-main" style={{ minHeight: 'calc(100vh - 180px)', border: '1px solid var(--filter-border)', borderRadius: '24px', overflow: 'hidden', background: 'var(--bg-primary)', boxShadow: 'var(--filter-shadow)' }}>
                         <div className="main-header" style={{ padding: '24px', borderBottom: '1px solid var(--filter-border)' }}>
                             <div className="filters-container" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>

@@ -27,11 +27,13 @@ import AnalyticsPage from "./pages/analytics/AnalyticsPage";
 import UsersPage from "./pages/users/UsersPage";
 import ExpensesList from "./pages/expenses/ExpensesList";
 import ExpenseCategories from "./pages/expenses/ExpenseCategories";
+import ExpenseCategoryDetails from "./pages/expenses/ExpenseCategoryDetails";
 import BuildingExpenses from "./pages/expenses/BuildingExpenses";
 import SmsPage from "./pages/sms/SmsPage";
 import FormsPage from "./pages/forms/FormsPage";
 import IncomesList from "./pages/incomes/IncomesList";
 import IncomeCategories from "./pages/incomes/IncomeCategories";
+import IncomeCategoryDetails from "./pages/incomes/IncomeCategoryDetails";
 import BuildingIncomes from "./pages/incomes/BuildingIncomes";
 import PublicFormPage from "./pages/forms/PublicFormPage";
 import "./index.css";
@@ -217,6 +219,14 @@ function App() {
                 }
               />
               <Route
+                path="/expense-categories/:id"
+                element={
+                  <ProtectedLayout permission="can_view_expenses">
+                    <ExpenseCategoryDetails />
+                  </ProtectedLayout>
+                }
+              />
+              <Route
                 path="/expenses/buildings"
                 element={
                   <ProtectedLayout permission="can_view_expenses">
@@ -239,6 +249,14 @@ function App() {
                 element={
                   <ProtectedLayout permission="can_view_incomes">
                     <IncomeCategories />
+                  </ProtectedLayout>
+                }
+              />
+              <Route
+                path="/incomes/categories/:id"
+                element={
+                  <ProtectedLayout permission="can_view_incomes">
+                    <IncomeCategoryDetails />
                   </ProtectedLayout>
                 }
               />
