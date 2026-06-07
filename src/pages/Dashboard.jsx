@@ -11,6 +11,7 @@ const Dashboard = () => {
     const { user } = useAuth();
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [period, setPeriod] = useState('monthly');
 
     useEffect(() => {
         fetchSummary();
@@ -35,18 +36,13 @@ const Dashboard = () => {
     const canViewExpenses = user?.is_superuser || user?.permissions?.can_view_expenses;
 
     const stats = [
-        { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building' },
-        { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home' },
-        { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users' },
-        { label: 'Shartnomalar', value: summary?.contracts_count || '0', color: 'cyan', icon: 'contract' },
+        { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
+        { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
+        { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Shartnoma rasmiylashtirgan jami faol mijozlar soni' },
+        { label: 'Shartnomalar', value: summary?.contracts_count || '0', color: 'cyan', icon: 'contract', tooltip: 'Tizimda yaratilgan jami shartnomalar soni (bekor qilinganlaridan tashqari)' },
     ];
 
-    const revenueStats = [
-        { label: 'Bugungi tushum', value: summary?.revenue?.daily || 0, color: 'success' },
-        { label: 'Haftalik tushum', value: summary?.revenue?.weekly || 0, color: 'primary' },
-        { label: 'Oylik tushum', value: summary?.revenue?.monthly || 0, color: 'info' },
-        { label: 'Umumiy qarzlar', value: summary?.revenue?.total_debt || 0, color: 'warning' },
-    ];
+    // Revenue stats are dynamically generated from summary.finance based on selected period
 
     const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'];
 
@@ -101,13 +97,16 @@ const Dashboard = () => {
 
             {/* Counts Section */}
             <section className="stats-grid">
-                {stats.map((stat) => (
+                {stats.map((stat, i) => (
                     <div key={stat.label} className={`stat-card stat-${stat.color}`}>
                         <div className="stat-icon">
                             <StatIcon type={stat.icon} />
                         </div>
                         <div className="stat-info-box">
-                            <span className="stat-value">{stat.value}</span>
+                            <div className="stat-value-row">
+                                <span className="stat-value">{stat.value}</span>
+                                <InfoTooltip text={stat.tooltip} position={(i === 1 || i === 3) ? 'left' : 'top'} />
+                            </div>
                             <span className="stat-label">{stat.label}</span>
                         </div>
                     </div>
@@ -115,40 +114,154 @@ const Dashboard = () => {
             </section>
 
             {/* Revenue Overview Section */}
-            <div className="section-title">Moliyaviy ko'rsatkichlar</div>
-            <section className="revenue-grid">
-                {revenueStats.map((item) => {
-                    const totalVal = summary?.revenue?.total_sales_value || 1;
-                    const realPercentage = (item.value / totalVal) * 100;
-                    const displayPercentage = Math.min(100, Math.max(2, realPercentage));
-                    const isDebt = item.label === 'Umumiy qarzlar';
-
-                    return (
-                        <div key={item.label} className={`revenue-card rev-${item.color}`}>
-                            <span className="revenue-label">{item.label}</span>
-                            <span className="revenue-value">{formatCurrency(item.value)}</span>
-                            <div className="revenue-chart-mini">
-                                <div className="mini-bar-container">
-                                    <div
-                                        className="mini-bar"
-                                        style={{ width: `${displayPercentage}%` }}
-                                    ></div>
-                                </div>
-                                <div className="revenue-footer">
-                                    <span className="footer-target">
-                                        {isDebt
-                                            ? `To'langan: ${formatCurrency(totalVal - item.value)}`
-                                            : `Jami: ${formatCurrency(totalVal)}`}
-                                    </span>
-                                    <span className="footer-percent">
-                                        {isDebt ? `${realPercentage.toFixed(1)}% to'lanmagan` : `${realPercentage.toFixed(1)}%`}
-                                    </span>
-                                </div>
-                            </div>
+            {(canViewIncomes || canViewExpenses) && (
+                <>
+                    <div className="finance-header">
+                        <div className="section-title">Moliyaviy ko'rsatkichlar</div>
+                        <div className="period-selector">
+                            <button
+                                className={`period-btn ${period === 'daily' ? 'active' : ''}`}
+                                onClick={() => setPeriod('daily')}
+                            >
+                                Bugun
+                            </button>
+                            <button
+                                className={`period-btn ${period === 'weekly' ? 'active' : ''}`}
+                                onClick={() => setPeriod('weekly')}
+                            >
+                                Hafta
+                            </button>
+                            <button
+                                className={`period-btn ${period === 'monthly' ? 'active' : ''}`}
+                                onClick={() => setPeriod('monthly')}
+                            >
+                                Oy
+                            </button>
+                            <button
+                                className={`period-btn ${period === 'total' ? 'active' : ''}`}
+                                onClick={() => setPeriod('total')}
+                            >
+                                Jami
+                            </button>
                         </div>
-                    );
-                })}
-            </section>
+                    </div>
+                    
+                    <section className="revenue-grid">
+                        {/* 1. Kirim Card */}
+                        {canViewIncomes && (() => {
+                            const incomeValue = summary?.finance?.income?.[period] ?? (period === 'monthly' ? (summary?.revenue?.monthly ?? 0) : 0);
+                            const totalVal = summary?.finance?.sales_value ?? (summary?.revenue?.total_sales_value ?? 1);
+                            const realPercentage = totalVal > 0 ? (incomeValue / totalVal) * 100 : 0;
+                            const displayPercentage = Math.min(100, Math.max(2, realPercentage));
+                            const label = period === 'daily' ? 'Bugungi kirim' : period === 'weekly' ? 'Haftalik kirim' : period === 'monthly' ? 'Oylik kirim' : 'Umumiy kirim';
+                            
+                            return (
+                                <div className="revenue-card rev-success">
+                                    <div className="revenue-label-row">
+                                        <span className="revenue-label">{label}</span>
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi barcha kirimlar (shartnoma to'lovlari + manual tushumlar)`} position="top" />
+                                    </div>
+                                    <span className="revenue-value">{formatCurrency(incomeValue)}</span>
+                                    <div className="revenue-chart-mini">
+                                        <div className="mini-bar-container">
+                                            <div className="mini-bar" style={{ width: `${displayPercentage}%` }}></div>
+                                        </div>
+                                        <div className="revenue-footer">
+                                            <span className="footer-target">Jami savdo: {formatCurrency(totalVal)}</span>
+                                            <span className="footer-percent">{realPercentage.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* 2. Chiqim Card */}
+                        {canViewExpenses && (() => {
+                            const expenseValue = summary?.finance?.expense?.[period] ?? (period === 'monthly' ? (summary?.expenses?.total_amount ?? 0) : 0);
+                            const incomeValue = summary?.finance?.income?.[period] ?? (period === 'monthly' ? (summary?.revenue?.monthly ?? 0) : 0);
+                            const realPercentage = incomeValue > 0 ? (expenseValue / incomeValue) * 100 : 0;
+                            const displayPercentage = Math.min(100, Math.max(2, realPercentage));
+                            const label = period === 'daily' ? 'Bugungi chiqim' : period === 'weekly' ? 'Haftalik chiqim' : period === 'monthly' ? 'Oylik chiqim' : 'Umumiy chiqim';
+                            
+                            return (
+                                <div className="revenue-card rev-danger">
+                                    <div className="revenue-label-row">
+                                        <span className="revenue-label">{label}</span>
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi jami chiqimlar (xarajatlar)`} position="left" />
+                                    </div>
+                                    <span className="revenue-value">{formatCurrency(expenseValue)}</span>
+                                    <div className="revenue-chart-mini">
+                                        <div className="mini-bar-container">
+                                            <div className="mini-bar" style={{ width: `${displayPercentage}%` }}></div>
+                                        </div>
+                                        <div className="revenue-footer">
+                                            <span className="footer-target">Kirimga nisbatan</span>
+                                            <span className="footer-percent">{realPercentage.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* 3. Balans (Plus-Minus) Card */}
+                        {canViewIncomes && canViewExpenses && (() => {
+                            const balanceValue = summary?.finance?.balance?.[period] ?? 0;
+                            const incomeValue = summary?.finance?.income?.[period] ?? (period === 'monthly' ? (summary?.revenue?.monthly ?? 0) : 0);
+                            const realPercentage = incomeValue > 0 ? (balanceValue / incomeValue) * 100 : 0;
+                            const displayPercentage = Math.min(100, Math.max(2, Math.abs(realPercentage)));
+                            const label = period === 'daily' ? 'Bugungi balans' : period === 'weekly' ? 'Haftalik balans' : period === 'monthly' ? 'Oylik balans' : 'Umumiy balans';
+                            const isPositive = balanceValue >= 0;
+                            
+                            return (
+                                <div className={`revenue-card ${isPositive ? 'rev-success' : 'rev-danger'}`}>
+                                    <div className="revenue-label-row">
+                                        <span className="revenue-label">{label}</span>
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi sof balans ko'rsatkichi (Kirimlar - Chiqimlar)`} position="top" />
+                                    </div>
+                                    <span className="revenue-value">{formatCurrency(balanceValue)}</span>
+                                    <div className="revenue-chart-mini">
+                                        <div className="mini-bar-container">
+                                            <div className="mini-bar" style={{ width: `${displayPercentage}%` }}></div>
+                                        </div>
+                                        <div className="revenue-footer">
+                                            <span className="footer-target">Rentabellik</span>
+                                            <span className="footer-percent">{realPercentage.toFixed(1)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {/* 4. Qarzlar Card */}
+                        {canViewIncomes && (() => {
+                            const debtValue = summary?.finance?.debt ?? (summary?.revenue?.total_debt ?? 0);
+                            const totalVal = summary?.finance?.sales_value ?? (summary?.revenue?.total_sales_value ?? 1);
+                            const paidValue = Math.max(0, totalVal - debtValue);
+                            const realPercentage = totalVal > 0 ? (debtValue / totalVal) * 100 : 0;
+                            const displayPercentage = Math.min(100, Math.max(2, realPercentage));
+                            
+                            return (
+                                <div className="revenue-card rev-warning">
+                                    <div className="revenue-label-row">
+                                        <span className="revenue-label">Umumiy qarzlar</span>
+                                        <InfoTooltip text="Mijozlarning shartnomalar bo'yicha hali to'lanmagan jami qarz qoldig'i (doimiy umumiy stat)" position="left" />
+                                    </div>
+                                    <span className="revenue-value">{formatCurrency(debtValue)}</span>
+                                    <div className="revenue-chart-mini">
+                                        <div className="mini-bar-container">
+                                            <div className="mini-bar" style={{ width: `${displayPercentage}%` }}></div>
+                                        </div>
+                                        <div className="revenue-footer">
+                                            <span className="footer-target">To'langan: {formatCurrency(paidValue)}</span>
+                                            <span className="footer-percent">{realPercentage.toFixed(1)}% qarz</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </section>
+                </>
+            )}
 
             {/* Charts Section */}
             <div className="section-title">Asosiy tahlillar</div>
@@ -156,17 +269,22 @@ const Dashboard = () => {
                 {/* ═══ Funnel Section ═══ */}
                 {summary?.homes_funnel && (
                     <div className="chart-card">
+                        <div className="chart-header">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M3 12l9-9 9 9"></path>
+                                        <path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"></path>
+                                    </svg>
+                                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Xonadonlar holati</h3>
+                                </div>
+                                <InfoTooltip text="Xonadonlarning joriy holatlari bo'yicha (Sotuvda, Sotilgan, Band qilingan) taqsimoti" position="left" />
+                            </div>
+                        </div>
                         <FunnelChart
                             items={summary.homes_funnel}
                             maxWidth={550}
-                            title="Xonadonlar holati"
                             unit="ta uy"
-                            icon={
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M3 12l9-9 9 9"></path>
-                                    <path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"></path>
-                                </svg>
-                            }
                         />
                     </div>
                 )}
@@ -174,7 +292,10 @@ const Dashboard = () => {
                 {/* Building Occupancy */}
                 <div className="chart-card">
                     <div className="chart-header">
-                        <h3>Bino bandligi (Sotilgan / Jami)</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <h3>Bino bandligi (Sotilgan / Jami)</h3>
+                            <InfoTooltip text="Har bir bino bo'yicha sotilgan xonadonlar ulushi foizda" position="left" />
+                        </div>
                     </div>
                     <div className="chart-container">
                         <AmBarChart
@@ -192,7 +313,10 @@ const Dashboard = () => {
                 {/* Weekly Trend */}
                 <div className="chart-card">
                     <div className="chart-header">
-                        <h3>Haftalik mijozlar o'sishi</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <h3>Haftalik mijozlar o'sishi</h3>
+                            <InfoTooltip text="Oxirgi 7 kun davomida qo'shilgan yangi mijozlar dinamikasi" position="left" />
+                        </div>
                     </div>
                     <div className="chart-container">
                         <AmAreaChart
@@ -209,7 +333,10 @@ const Dashboard = () => {
                 {/* Lead Sources */}
                 <div className="chart-card">
                     <div className="chart-header">
-                        <h3>Mijozlar qayerdan eshitgan</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <h3>Mijozlar qayerdan eshitgan</h3>
+                            <InfoTooltip text="Mijozlarning reklama manbalari bo'yicha ulushlari taqsimoti" position="left" />
+                        </div>
                     </div>
                     <div className="chart-container pie-chart-container">
                         <AmPieChart
@@ -223,9 +350,12 @@ const Dashboard = () => {
                 </div>
 
                 {/* Debtors Table - Full Width */}
-                <div className="chart-card full-width-card" style={{ padding: '0', overflow: 'hidden' }}>
+                <div className="chart-card full-width-card" style={{ padding: '0', overflow: 'visible' }}>
                     <div className="chart-header" style={{ padding: '32px 32px 0 32px', marginBottom: '24px' }}>
-                        <h3>Eng ko'p qarzdorlar</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <h3>Eng ko'p qarzdorlar</h3>
+                            <InfoTooltip text="Shartnomalardan eng ko'p qarz qoldig'iga ega bo'lgan top 10 ta mijoz ro'yxati" position="left" />
+                        </div>
                     </div>
                     <div className="analytics-table-wrapper">
                         <table className="analytics-table">
@@ -306,7 +436,10 @@ const Dashboard = () => {
                         {/* Daily Incomes Trend */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Kunlik tushumlar trendi</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Kunlik tushumlar trendi</h3>
+                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik tushumlar (kirimlar) hajmi o'zgarishi" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container">
                                 <AmAreaChart
@@ -323,7 +456,10 @@ const Dashboard = () => {
                         {/* Incomes by Category */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Daromad manbalari</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Daromad manbalari</h3>
+                                    <InfoTooltip text="Kirim kategoriyalari bo'yicha tushumlar taqsimoti" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container pie-chart-container">
                                 <AmPieChart
@@ -339,7 +475,10 @@ const Dashboard = () => {
                         {/* Incomes by Building */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Binolar bo'yicha tushumlar</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Binolar bo'yicha tushumlar</h3>
+                                    <InfoTooltip text="Top 5 ta bino kesimida yig'ilgan jami kirimlar" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container">
                                 <AmBarChart
@@ -364,7 +503,10 @@ const Dashboard = () => {
                         {/* Daily Expenses Trend */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Kunlik chiqimlar trendi</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Kunlik chiqimlar trendi</h3>
+                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik xarajatlar (chiqimlar) hajmi o'zgarishi" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container">
                                 <AmAreaChart
@@ -381,7 +523,10 @@ const Dashboard = () => {
                         {/* Expenses by Category */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Xarajat turlari</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Xarajat turlari</h3>
+                                    <InfoTooltip text="Chiqim kategoriyalari bo'yicha xarajatlar taqsimoti" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container pie-chart-container">
                                 <AmPieChart
@@ -397,7 +542,10 @@ const Dashboard = () => {
                         {/* Expenses by Building */}
                         <div className="chart-card">
                             <div className="chart-header">
-                                <h3>Binolar bo'yicha chiqimlar</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <h3>Binolar bo'yicha chiqimlar</h3>
+                                    <InfoTooltip text="Top 5 ta bino kesimida amalga oshirilgan jami chiqimlar" position="left" />
+                                </div>
                             </div>
                             <div className="chart-container">
                                 <AmBarChart
@@ -426,6 +574,23 @@ const StatIcon = ({ type }) => {
     if (type === 'home') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12l9-9 9 9" /><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" /></svg>;
     if (type === 'users') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>;
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>;
+};
+
+const InfoIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="info-icon-svg">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+);
+
+const InfoTooltip = ({ text, position = 'top' }) => {
+    return (
+        <div className={`tooltip-container tooltip-${position}`}>
+            <InfoIcon />
+            <span className="tooltip-text">{text}</span>
+        </div>
+    );
 };
 
 export default Dashboard;
