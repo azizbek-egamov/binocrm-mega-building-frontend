@@ -38,8 +38,15 @@ const Dashboard = () => {
     const stats = [
         { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
         { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
-        { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Shartnoma rasmiylashtirgan jami faol mijozlar soni' },
-        { label: 'Shartnomalar', value: summary?.contracts_count || '0', color: 'cyan', icon: 'contract', tooltip: 'Tizimda yaratilgan jami shartnomalar soni (bekor qilinganlaridan tashqari)' },
+        { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Bazada qo\'shilgan barcha mijozlar ro\'yxati' },
+        { 
+            label: 'Shartnomalar', 
+            value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`, 
+            subtext: `To'liq to'laganlar: ${summary?.paid_contracts_count || '0'}`,
+            color: 'cyan', 
+            icon: 'contract', 
+            tooltip: 'Qarzi bor shartnomalar / Umumiy shartnomalar soni. Pastda to\'liq to\'langan shartnomalar soni.' 
+        },
     ];
 
     // Revenue stats are dynamically generated from summary.finance based on selected period
@@ -108,6 +115,11 @@ const Dashboard = () => {
                                 <InfoTooltip text={stat.tooltip} position={(i === 1 || i === 3) ? 'left' : 'top'} />
                             </div>
                             <span className="stat-label">{stat.label}</span>
+                            {stat.subtext && (
+                                <span className="stat-subtext" style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>
+                                    {stat.subtext}
+                                </span>
+                            )}
                         </div>
                     </div>
                 ))}

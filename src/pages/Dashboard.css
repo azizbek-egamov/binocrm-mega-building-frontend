@@ -172,6 +172,11 @@
     animation: fadeInUp 0.5s ease-out backwards;
 }
 
+/* Leads.css-dan keluvchi global ::before ni o'chirish */
+.stat-card::before {
+    display: none !important;
+}
+
 .stat-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-2xl);
