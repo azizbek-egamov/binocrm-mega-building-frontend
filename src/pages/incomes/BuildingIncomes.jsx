@@ -84,7 +84,7 @@ const BuildingIncomes = () => {
             const [buildingsRes, categoriesRes, usersRes] = await Promise.all([
                 buildingsService.getBuildings({ page: currentPage, page_size: PAGE_SIZE }),
                 incomesService.getCategories(),
-                getFinanceUsers()
+                getFinanceUsers({ type: 'income' })
             ]);
             
             const bData = buildingsRes.results || buildingsRes;
@@ -391,7 +391,7 @@ const BuildingIncomes = () => {
                                 )}
                                 <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)}>
                                     <option value="">Barcha xodimlar</option>
-                                    {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.count || 0})</option>)}
                                 </select>
                                 {(startDate || endDate || filterCategory || filterUser) && (
                                     <button className="btn-filter-clear" onClick={() => { setStartDate(''); setEndDate(''); setFilterCategory(''); setFilterUser(''); }}>

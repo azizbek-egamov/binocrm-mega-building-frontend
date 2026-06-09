@@ -66,7 +66,7 @@ const ExpensesList = () => {
             const [buildingsRes, categoriesRes, usersRes] = await Promise.all([
                 buildingsService.getAllBuildings(),
                 expensesService.getCategories(),
-                getFinanceUsers()
+                getFinanceUsers({ type: 'expense' })
             ]);
             setBuildings(buildingsRes.results || buildingsRes);
             setCategories(categoriesRes.results || categoriesRes);
@@ -255,6 +255,16 @@ const ExpensesList = () => {
                                     <option value="">Kategoriya</option>
                                     {Array.isArray(categories) && categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
+                                {users.length > 0 && (
+                                    <select className="filter-select" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
+                                        <option value="">Foydalanuvchi</option>
+                                        {users.map(u => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.name || u.username || (u.first_name ? `${u.first_name} ${u.last_name || ''}` : 'Foydalanuvchi')} ({u.count || 0})
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                                 <select className="filter-select" value={paymentMethodFilter} onChange={(e) => { setPaymentMethodFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha to'lov turlari</option>
                                     <option value="cash">Naqd pul</option>

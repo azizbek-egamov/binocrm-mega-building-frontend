@@ -76,7 +76,7 @@ const IncomesList = () => {
             const [buildingsRes, categoriesRes, usersRes] = await Promise.all([
                 buildingsService.getAllBuildings(),
                 incomesService.getCategories(),
-                getFinanceUsers()
+                getFinanceUsers({ type: 'income' })
             ]);
             const bData = buildingsRes.results || buildingsRes;
             const cData = categoriesRes.results || categoriesRes;
@@ -301,7 +301,7 @@ const IncomesList = () => {
                                         <option value="">Foydalanuvchi</option>
                                         {users.map(u => (
                                             <option key={u.id} value={u.id}>
-                                                {u.name || u.username || (u.first_name ? `${u.first_name} ${u.last_name || ''}` : 'Foydalanuvchi')}
+                                                {u.name || u.username || (u.first_name ? `${u.first_name} ${u.last_name || ''}` : 'Foydalanuvchi')} ({u.count || 0})
                                             </option>
                                         ))}
                                     </select>

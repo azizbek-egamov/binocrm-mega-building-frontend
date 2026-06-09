@@ -113,7 +113,7 @@ const BuildingExpenses = () => {
             const [buildingsRes, catsRes, usersRes] = await Promise.all([
                 buildingsService.getBuildings({ page: currentPage, page_size: PAGE_SIZE }),
                 expensesService.getCategories({ active_only: true }),
-                getFinanceUsers()
+                getFinanceUsers({ type: 'expense' })
             ]);
 
             const bData = buildingsRes.results || buildingsRes;
@@ -432,7 +432,7 @@ const BuildingExpenses = () => {
                                 >
                                     <option value="">Barcha xodimlar</option>
                                     {users.map(u => (
-                                        <option key={u.id} value={u.id}>{u.name}</option>
+                                        <option key={u.id} value={u.id}>{u.name} ({u.count || 0})</option>
                                     ))}
                                 </select>
                                 <select

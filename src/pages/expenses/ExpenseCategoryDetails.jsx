@@ -89,7 +89,7 @@ const ExpenseCategoryDetails = () => {
             const [catData, buildingsRes, usersRes] = await Promise.all([
                 expensesService.getCategory(id),
                 buildingsService.getAllBuildings(),
-                getFinanceUsers()
+                getFinanceUsers({ type: 'expense' })
             ]);
             setCategory(catData);
             setFormData({
@@ -332,24 +332,24 @@ const ExpenseCategoryDetails = () => {
                                         type="text"
                                         placeholder="Tavsif bo'yicha qidirish..."
                                         value={search}
-                                        onChange={(e) => { setSearch(e.target.value); setPagination(prev => ({...prev, page: 1})); }}
+                                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                     />
                                 </div>
-                                <select className="filter-select" value={buildingFilter} onChange={(e) => { setBuildingFilter(e.target.value); setPagination(prev => ({...prev, page: 1})); }}>
+                                <select className="filter-select" value={buildingFilter} onChange={(e) => { setBuildingFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha binolar</option>
                                     {buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                                 </select>
-                                <select className="filter-select" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPagination(prev => ({...prev, page: 1})); }}>
+                                <select className="filter-select" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
                                     <option value="">Foydalanuvchi</option>
                                     {users.map(u => (
                                         <option key={u.id} value={u.id}>
-                                            {u.name || u.username || u.first_name || 'Foydalanuvchi'}
+                                            {u.name || u.username || u.first_name || 'Foydalanuvchi'} ({u.count || 0})
                                         </option>
                                     ))}
                                 </select>
-                                <input type="date" className="filter-select" style={{ width: 'auto' }} value={startDate} onChange={e => { setStartDate(e.target.value); setPagination(prev => ({...prev, page: 1})); }} title="Dan" />
-                                <input type="date" className="filter-select" style={{ width: 'auto' }} value={endDate} onChange={e => { setEndDate(e.target.value); setPagination(prev => ({...prev, page: 1})); }} title="Gacha" />
-                                <select className="filter-select" value={paymentMethodFilter} onChange={(e) => { setPaymentMethodFilter(e.target.value); setPagination(prev => ({...prev, page: 1})); }}>
+                                <input type="date" className="filter-select" style={{ width: 'auto' }} value={startDate} onChange={e => { setStartDate(e.target.value); setPage(1); }} title="Dan" />
+                                <input type="date" className="filter-select" style={{ width: 'auto' }} value={endDate} onChange={e => { setEndDate(e.target.value); setPage(1); }} title="Gacha" />
+                                <select className="filter-select" value={paymentMethodFilter} onChange={(e) => { setPaymentMethodFilter(e.target.value); setPage(1); }}>
                                     <option value="">Barcha to'lov turlari</option>
                                     <option value="cash">Naqd pul</option>
                                     <option value="bank">Bank/Karta</option>
