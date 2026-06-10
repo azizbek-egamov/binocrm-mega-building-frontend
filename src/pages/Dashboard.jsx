@@ -38,14 +38,14 @@ const Dashboard = () => {
     const stats = [
         { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
         { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
-        { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Bazada qo\'shilgan barcha mijozlar ro\'yxati' },
+        { label: 'Shartnoma tuzgan mijozlar', value: summary?.contracts_clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Kamida bitta shartnoma tuzgan mijozlar soni' },
         {
             label: 'Shartnomalar',
             value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`,
-            subtext: `To'liq to'laganlar: ${summary?.paid_contracts_count || '0'}`,
+            subtext: `Boshlagan: ${summary?.started_paying_count || '0'} / To'lamagan: ${summary?.never_paid_count || '0'} / To'liq: ${summary?.paid_contracts_count || '0'}`,
             color: 'cyan',
             icon: 'contract',
-            tooltip: 'Qarzi bor shartnomalar / Umumiy shartnomalar soni. Pastda to\'liq to\'langan shartnomalar soni.'
+            tooltip: 'Qarzi bor faol shartnomalar / Jami faol shartnomalar soni. Pastda to\'lovni boshlagan, umuman to\'lamagan va to\'liq to\'lagan shartnomalar soni.'
         },
     ];
 
@@ -116,7 +116,7 @@ const Dashboard = () => {
                             </div>
                             <span className="stat-label">{stat.label}</span>
                             {stat.subtext && (
-                                <span className="stat-subtext" style={{ fontSize: '11px', opacity: 0.8, marginTop: '2px' }}>
+                                <span className="stat-subtext" style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', marginTop: '2px', display: 'block' }}>
                                     {stat.subtext}
                                 </span>
                             )}
