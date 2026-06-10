@@ -38,7 +38,7 @@ const Dashboard = () => {
     const stats = [
         { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
         { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
-        { label: 'Shartnoma tuzgan mijozlar', value: summary?.contracts_clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Kamida bitta shartnoma tuzgan mijozlar soni' },
+        { label: 'Shartnoma tuzganlar', value: summary?.contracts_clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Kamida bitta shartnoma tuzgan mijozlar soni' },
         {
             label: 'Shartnomalar',
             value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`,
