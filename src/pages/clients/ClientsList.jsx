@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
 import { clientService } from "../../services/clients";
+import { getAllBuildings } from "../../services/buildings";
 import { toast } from "sonner";
 import "./Clients.css";
 import {
@@ -34,6 +35,8 @@ const ClientsList = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState("");
+  const [buildings, setBuildings] = useState([]);
 
   // Pagination
   const [pagination, setPagination] = useState({
@@ -61,9 +64,22 @@ const ClientsList = () => {
   const [sendingSms, setSendingSms] = useState(false);
 
   useEffect(() => {
+    loadBuildings();
+  }, []);
+
+  const loadBuildings = async () => {
+    try {
+      const data = await getAllBuildings({ include_archived: "true" });
+      setBuildings(data);
+    } catch (error) {
+      console.error("Binolarni yuklashda xatolik:", error);
+    }
+  };
+
+  useEffect(() => {
     loadClients();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, search, sourceFilter]);
+  }, [pagination.page, search, sourceFilter, buildingFilter]);
 
   const loadClients = async () => {
     try {
@@ -74,6 +90,7 @@ const ClientsList = () => {
       };
       if (search) params.search = search;
       if (sourceFilter && sourceFilter !== "all") params.heard = sourceFilter;
+      if (buildingFilter && buildingFilter !== "all") params.building = buildingFilter;
 
       const response = await clientService.getAll(params);
       const data = response.data;
@@ -105,6 +122,11 @@ const ClientsList = () => {
 
   const handleSourceFilter = (e) => {
     setSourceFilter(e.target.value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleBuildingFilter = (e) => {
+    setBuildingFilter(e.target.value);
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -392,7 +414,7 @@ const ClientsList = () => {
       <div className="page-header">
         <div className="header-left">
           <h1 className="page-title">Mijozlar</h1>
-          <p className="page-subtitle">Mijozlar bazasini boshqarish</p>
+          <p className="page-subtitle">Mijozlar bazasini boshqarish (Jami: {pagination.count} ta mijoz)</p>
         </div>
         <div className="header-actions">
           <button className="btn-secondary" onClick={openBulkSmsModal}>
@@ -430,6 +452,20 @@ const ClientsList = () => {
                     {s.label}
                   </option>
                 ))}
+              </select>
+
+              <select
+                className="filter-select"
+                value={buildingFilter}
+                onChange={handleBuildingFilter}
+              >
+                <option value="all">Barcha binolar</option>
+                {buildings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.client_count || 0}){b.is_archived ? " (Arxivlangan)" : ""}
+                  </option>
+                ))}
+                <option value="no_contract">Umuman xonadon xarid qilmaganlar</option>
               </select>
 
               <div className="results-count">
@@ -687,6 +723,77 @@ const ClientsList = () => {
                       ))}
                     </select>
                   </div>
+
+                  {modal.type === "edit" && modal.client?.purchased_homes && modal.client.purchased_homes.length > 0 && (
+                    <div className="purchased-homes-section" style={{
+                      marginTop: '20px',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)'
+                    }}>
+                      <h4 style={{
+                        margin: '0 0 12px 0',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--primary-color)' }}>
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                        Xarid qilingan xonadonlar
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {modal.client.purchased_homes.map((home, idx) => (
+                          <div key={idx} style={{
+                            padding: '10px',
+                            borderRadius: '8px',
+                            background: 'var(--bg-primary)',
+                            border: '1px solid var(--border-color)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '10px'
+                          }}>
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                              <strong style={{ color: 'var(--text-primary)' }}>{home.building_name}</strong>, {home.home_number}-xonadon
+                              <div style={{ fontSize: '11px', marginTop: '2px' }}>
+                                Padez: {home.padez} | Qavat: {home.floor} | Xonalar: {home.rooms} | Maydon: {home.square_meter} kv.m
+                                {home.is_building_archived && <span style={{ color: '#ef4444', marginLeft: '6px', fontWeight: 'bold' }}>(Arxivlangan)</span>}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-secondary btn-sm"
+                              onClick={() => {
+                                window.open(`/contracts?contract_id=${home.contract_id}&include_archived=true`, '_blank');
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '12px',
+                                borderRadius: '8px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Shartnoma #{home.contract_number}
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <line x1="7" y1="17" x2="17" y2="7"></line>
+                                <polyline points="7 7 17 7 17 17"></polyline>
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="modal-actions">

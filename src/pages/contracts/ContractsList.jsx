@@ -55,15 +55,26 @@ const ContractsList = () => {
     const [paymentLoading, setPaymentLoading] = useState(false);
     const [paymentError, setPaymentError] = useState('');
     const [deletingId, setDeletingId] = useState(null);
-
     const fetchContracts = async () => {
         setLoading(true);
         try {
+            const queryParams = new URLSearchParams(location.search);
+            const contractIdParam = queryParams.get('contract_id');
+            const includeArchivedParam = queryParams.get('include_archived');
+
             const params = {
                 page,
                 search,
                 ...advancedFilters
             };
+
+            if (contractIdParam) {
+                params.contract_id = contractIdParam;
+            }
+            if (includeArchivedParam) {
+                params.include_archived = includeArchivedParam;
+            }
+
             const response = await contractService.getAll(params);
 
             // Handle pagination response format
@@ -88,20 +99,24 @@ const ContractsList = () => {
         }, 300); // Debounce
         return () => clearTimeout(timeoutId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, search, advancedFilters]);
+    }, [page, search, advancedFilters, location.search]);
 
-    // Handle auto-opening of contract details from navigation state
+    // Handle auto-opening of contract details from navigation state/URL query params
     useEffect(() => {
         if (location.state?.autoOpenContractId) {
             showContractDetails(location.state.autoOpenContractId);
-            // Clear state to prevent re-opening on manual refresh/navigation
             window.history.replaceState({}, document.title);
+        } else {
+            const queryParams = new URLSearchParams(location.search);
+            const contractIdParam = queryParams.get('contract_id');
+            if (contractIdParam) {
+                showContractDetails(contractIdParam);
+            }
         }
         if (location.state?.search) {
             setSearch(location.state.search);
         }
-    }, [location.state]);
-
+    }, [location.state, location.search]);
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setPage(newPage);

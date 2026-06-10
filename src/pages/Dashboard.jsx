@@ -39,13 +39,13 @@ const Dashboard = () => {
         { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
         { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
         { label: 'Mijozlar', value: summary?.clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Bazada qo\'shilgan barcha mijozlar ro\'yxati' },
-        { 
-            label: 'Shartnomalar', 
-            value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`, 
+        {
+            label: 'Shartnomalar',
+            value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`,
             subtext: `To'liq to'laganlar: ${summary?.paid_contracts_count || '0'}`,
-            color: 'cyan', 
-            icon: 'contract', 
-            tooltip: 'Qarzi bor shartnomalar / Umumiy shartnomalar soni. Pastda to\'liq to\'langan shartnomalar soni.' 
+            color: 'cyan',
+            icon: 'contract',
+            tooltip: 'Qarzi bor shartnomalar / Umumiy shartnomalar soni. Pastda to\'liq to\'langan shartnomalar soni.'
         },
     ];
 
@@ -157,7 +157,7 @@ const Dashboard = () => {
                             </button>
                         </div>
                     </div>
-                    
+
                     <section className="revenue-grid">
                         {/* 1. Kirim Card */}
                         {canViewIncomes && (() => {
@@ -166,7 +166,7 @@ const Dashboard = () => {
                             const realPercentage = totalVal > 0 ? (incomeValue / totalVal) * 100 : 0;
                             const displayPercentage = Math.min(100, Math.max(2, realPercentage));
                             const label = period === 'daily' ? 'Bugungi kirim' : period === 'weekly' ? 'Haftalik kirim' : period === 'monthly' ? 'Oylik kirim' : 'Umumiy kirim';
-                            
+
                             return (
                                 <div className="revenue-card rev-success">
                                     <div className="revenue-label-row">
@@ -194,7 +194,7 @@ const Dashboard = () => {
                             const realPercentage = incomeValue > 0 ? (expenseValue / incomeValue) * 100 : 0;
                             const displayPercentage = Math.min(100, Math.max(2, realPercentage));
                             const label = period === 'daily' ? 'Bugungi chiqim' : period === 'weekly' ? 'Haftalik chiqim' : period === 'monthly' ? 'Oylik chiqim' : 'Umumiy chiqim';
-                            
+
                             return (
                                 <div className="revenue-card rev-danger">
                                     <div className="revenue-label-row">
@@ -223,7 +223,7 @@ const Dashboard = () => {
                             const displayPercentage = Math.min(100, Math.max(2, Math.abs(realPercentage)));
                             const label = period === 'daily' ? 'Bugungi balans' : period === 'weekly' ? 'Haftalik balans' : period === 'monthly' ? 'Oylik balans' : 'Umumiy balans';
                             const isPositive = balanceValue >= 0;
-                            
+
                             return (
                                 <div className={`revenue-card ${isPositive ? 'rev-success' : 'rev-danger'}`}>
                                     <div className="revenue-label-row">
@@ -251,7 +251,7 @@ const Dashboard = () => {
                             const paidValue = Math.max(0, totalVal - debtValue);
                             const realPercentage = totalVal > 0 ? (debtValue / totalVal) * 100 : 0;
                             const displayPercentage = Math.min(100, Math.max(2, realPercentage));
-                            
+
                             return (
                                 <div className="revenue-card rev-warning">
                                     <div className="revenue-label-row">
