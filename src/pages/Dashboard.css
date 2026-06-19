@@ -1452,3 +1452,42 @@
 .stat-value-row .stat-value {
     margin-bottom: 0 !important;
 }
+
+/* ==========================================
+   TOOLTIP AND REDIRECT WRAPPER
+   ========================================== */
+.tooltip-and-redirect-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    vertical-align: middle;
+}
+
+.tooltip-redirect-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.tooltip-redirect-btn:hover {
+    color: var(--accent-primary);
+    background: rgba(99, 102, 241, 0.1);
+    transform: scale(1.15) translate(1px, -1px);
+}
+
+.tooltip-redirect-btn svg.redirect-icon-svg {
+    width: 18px; /* Larger than default 14px info icon */
+    height: 18px;
+    opacity: 0.8;
+}
+
+.tooltip-redirect-btn:hover svg.redirect-icon-svg {
+    opacity: 1;
+}

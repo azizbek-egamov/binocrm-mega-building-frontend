@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { clientService } from "../../services/clients";
 import { getAllBuildings } from "../../services/buildings";
 import { toast } from "sonner";
@@ -31,11 +32,12 @@ const HEARD_SOURCES = [
 ];
 
 const ClientsList = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const [buildingFilter, setBuildingFilter] = useState("");
+  const [buildingFilter, setBuildingFilter] = useState(searchParams.get("contract_filter") || "");
   const [buildings, setBuildings] = useState([]);
 
   // Pagination
@@ -77,9 +79,20 @@ const ClientsList = () => {
   };
 
   useEffect(() => {
+    const filter = searchParams.get("contract_filter");
+    if (filter) {
+      setBuildingFilter(filter);
+    } else {
+      // URL da contract_filter yo'q bo'lsa, buildingFilter ni tozalaymiz
+      setBuildingFilter("");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     loadClients();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, search, sourceFilter, buildingFilter]);
+  }, [pagination.page, search, sourceFilter, buildingFilter, searchParams]);
+
 
   const loadClients = async () => {
     try {
@@ -90,7 +103,11 @@ const ClientsList = () => {
       };
       if (search) params.search = search;
       if (sourceFilter && sourceFilter !== "all") params.heard = sourceFilter;
-      if (buildingFilter && buildingFilter !== "all") params.building = buildingFilter;
+
+      // URL da contract_filter bo'lsa, uni ustunlik bilan ishlat
+      const contractFilterFromUrl = searchParams.get("contract_filter");
+      const effectiveFilter = contractFilterFromUrl || buildingFilter;
+      if (effectiveFilter && effectiveFilter !== "all") params.building = effectiveFilter;
 
       const response = await clientService.getAll(params);
       const data = response.data;
@@ -127,6 +144,10 @@ const ClientsList = () => {
 
   const handleBuildingFilter = (e) => {
     setBuildingFilter(e.target.value);
+    // URL da contract_filter bo'lsa, uni olib tashlaymiz (dropdown manualda tanlab olinmoqda)
+    if (searchParams.get("contract_filter")) {
+      setSearchParams({});
+    }
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -460,6 +481,7 @@ const ClientsList = () => {
                 onChange={handleBuildingFilter}
               >
                 <option value="all">Barcha binolar</option>
+                <option value="has_contract">Kamida bitta shartnomasi borlar</option>
                 {buildings.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name} ({b.client_count || 0}){b.is_archived ? " (Arxivlangan)" : ""}

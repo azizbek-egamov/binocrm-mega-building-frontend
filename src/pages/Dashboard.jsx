@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analyticsService } from '../services/analytics';
 import { AmBarChart, AmAreaChart, AmPieChart, NoData } from '../components/AmCharts';
@@ -7,8 +8,10 @@ import './Dashboard.css';
 
 
 
+
 const Dashboard = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('monthly');
@@ -36,16 +39,17 @@ const Dashboard = () => {
     const canViewExpenses = user?.is_superuser || user?.permissions?.can_view_expenses;
 
     const stats = [
-        { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni' },
-        { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni' },
-        { label: 'Shartnoma tuzganlar', value: summary?.contracts_clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Kamida bitta shartnoma tuzgan mijozlar soni' },
+        { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni', link: '/buildings' },
+        { label: 'Uylar', value: summary?.homes_count || '0', color: 'success', icon: 'home', tooltip: 'Binolarga tegishli bo\'lgan barcha xonadonlar (sotuvda, sotilgan va band qilingan uylar) soni', link: '/homes' },
+        { label: 'Shartnoma tuzganlar', value: summary?.contracts_clients_count || '0', color: 'warning', icon: 'users', tooltip: 'Kamida bitta shartnoma tuzgan mijozlar soni', link: '/clients?contract_filter=has_contract' },
         {
             label: 'Shartnomalar',
             value: `${summary?.unpaid_contracts_count || '0'}/${summary?.contracts_count || '0'}`,
             subtext: `Boshlagan: ${summary?.started_paying_count || '0'} / To'lamagan: ${summary?.never_paid_count || '0'} / To'liq: ${summary?.paid_contracts_count || '0'}`,
             color: 'cyan',
             icon: 'contract',
-            tooltip: 'Qarzi bor faol shartnomalar / Jami faol shartnomalar soni. Pastda to\'lovni boshlagan, umuman to\'lamagan va to\'liq to\'lagan shartnomalar soni.'
+            tooltip: 'Qarzi bor faol shartnomalar / Jami faol shartnomalar soni. Pastda to\'lovni boshlagan, umuman to\'lamagan va to\'liq to\'lagan shartnomalar soni.',
+            link: '/contracts'
         },
     ];
 
@@ -112,7 +116,7 @@ const Dashboard = () => {
                         <div className="stat-info-box">
                             <div className="stat-value-row">
                                 <span className="stat-value">{stat.value}</span>
-                                <InfoTooltip text={stat.tooltip} position={(i === 1 || i === 3) ? 'left' : 'top'} />
+                                <InfoTooltip text={stat.tooltip} position={(i === 1 || i === 3) ? 'left' : 'top'} link={stat.link} />
                             </div>
                             <span className="stat-label">{stat.label}</span>
                             {stat.subtext && (
@@ -171,7 +175,7 @@ const Dashboard = () => {
                                 <div className="revenue-card rev-success">
                                     <div className="revenue-label-row">
                                         <span className="revenue-label">{label}</span>
-                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi barcha kirimlar (shartnoma to'lovlari + manual tushumlar)`} position="top" />
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi barcha kirimlar (shartnoma to'lovlari + manual tushumlar)`} position="top" link="/incomes" />
                                     </div>
                                     <span className="revenue-value">{formatCurrency(incomeValue)}</span>
                                     <div className="revenue-chart-mini">
@@ -199,7 +203,7 @@ const Dashboard = () => {
                                 <div className="revenue-card rev-danger">
                                     <div className="revenue-label-row">
                                         <span className="revenue-label">{label}</span>
-                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi jami chiqimlar (xarajatlar)`} position="left" />
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi jami chiqimlar (xarajatlar)`} position="left" link="/expenses" />
                                     </div>
                                     <span className="revenue-value">{formatCurrency(expenseValue)}</span>
                                     <div className="revenue-chart-mini">
@@ -228,7 +232,7 @@ const Dashboard = () => {
                                 <div className={`revenue-card ${isPositive ? 'rev-success' : 'rev-danger'}`}>
                                     <div className="revenue-label-row">
                                         <span className="revenue-label">{label}</span>
-                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi sof balans ko'rsatkichi (Kirimlar - Chiqimlar)`} position="top" />
+                                        <InfoTooltip text={`Tanlangan davr (${period === 'daily' ? 'bugun' : period === 'weekly' ? 'hafta' : period === 'monthly' ? 'oy' : 'jami'}) davomidagi sof balans ko'rsatkichi (Kirimlar - Chiqimlar)`} position="top" link="/analytics" />
                                     </div>
                                     <span className="revenue-value">{formatCurrency(balanceValue)}</span>
                                     <div className="revenue-chart-mini">
@@ -256,7 +260,7 @@ const Dashboard = () => {
                                 <div className="revenue-card rev-warning">
                                     <div className="revenue-label-row">
                                         <span className="revenue-label">Umumiy qarzlar</span>
-                                        <InfoTooltip text="Mijozlarning shartnomalar bo'yicha hali to'lanmagan jami qarz qoldig'i (doimiy umumiy stat)" position="left" />
+                                        <InfoTooltip text="Mijozlarning shartnomalar bo'yicha hali to'lanmagan jami qarz qoldig'i (doimiy umumiy stat)" position="left" link="/contracts" />
                                     </div>
                                     <span className="revenue-value">{formatCurrency(debtValue)}</span>
                                     <div className="revenue-chart-mini">
@@ -290,7 +294,7 @@ const Dashboard = () => {
                                     </svg>
                                     <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Xonadonlar holati</h3>
                                 </div>
-                                <InfoTooltip text="Xonadonlarning joriy holatlari bo'yicha (Sotuvda, Sotilgan, Band qilingan) taqsimoti" position="left" />
+                                <InfoTooltip text="Xonadonlarning joriy holatlari bo'yicha (Sotuvda, Sotilgan, Band qilingan) taqsimoti" position="left" link="/homes" />
                             </div>
                         </div>
                         <FunnelChart
@@ -306,7 +310,7 @@ const Dashboard = () => {
                     <div className="chart-header">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <h3>Bino bandligi (Sotilgan / Jami)</h3>
-                            <InfoTooltip text="Har bir bino bo'yicha sotilgan xonadonlar ulushi foizda" position="left" />
+                            <InfoTooltip text="Har bir bino bo'yicha sotilgan xonadonlar ulushi foizda" position="left" link="/buildings" />
                         </div>
                     </div>
                     <div className="chart-container">
@@ -327,7 +331,7 @@ const Dashboard = () => {
                     <div className="chart-header">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <h3>Haftalik mijozlar o'sishi</h3>
-                            <InfoTooltip text="Oxirgi 7 kun davomida qo'shilgan yangi mijozlar dinamikasi" position="left" />
+                            <InfoTooltip text="Oxirgi 7 kun davomida qo'shilgan yangi mijozlar dinamikasi" position="left" link="/clients" />
                         </div>
                     </div>
                     <div className="chart-container">
@@ -347,7 +351,7 @@ const Dashboard = () => {
                     <div className="chart-header">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <h3>Mijozlar qayerdan eshitgan</h3>
-                            <InfoTooltip text="Mijozlarning reklama manbalari bo'yicha ulushlari taqsimoti" position="left" />
+                            <InfoTooltip text="Mijozlarning reklama manbalari bo'yicha ulushlari taqsimoti" position="left" link="/analytics" />
                         </div>
                     </div>
                     <div className="chart-container pie-chart-container">
@@ -366,7 +370,7 @@ const Dashboard = () => {
                     <div className="chart-header" style={{ padding: '32px 32px 0 32px', marginBottom: '24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <h3>Eng ko'p qarzdorlar</h3>
-                            <InfoTooltip text="Shartnomalardan eng ko'p qarz qoldig'iga ega bo'lgan top 10 ta mijoz ro'yxati" position="left" />
+                            <InfoTooltip text="Shartnomalardan eng ko'p qarz qoldig'iga ega bo'lgan top 10 ta mijoz ro'yxati" position="left" link="/contracts" />
                         </div>
                     </div>
                     <div className="analytics-table-wrapper">
@@ -386,7 +390,7 @@ const Dashboard = () => {
                                     const pct = total > 0 ? Math.round((paid / total) * 100) : 0;
 
                                     return (
-                                        <tr key={d.id || i}>
+                                        <tr key={d.id || i} onClick={() => navigate(`/contracts?contract_id=${d.id}`)} style={{ cursor: 'pointer' }}>
                                             <td className="table-building-name">
                                                 <div className="table-cell-detailed">
                                                     <span>
@@ -450,7 +454,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Kunlik tushumlar trendi</h3>
-                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik tushumlar (kirimlar) hajmi o'zgarishi" position="left" />
+                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik tushumlar (kirimlar) hajmi o'zgarishi" position="left" link="/incomes" />
                                 </div>
                             </div>
                             <div className="chart-container">
@@ -470,7 +474,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Daromad manbalari</h3>
-                                    <InfoTooltip text="Kirim kategoriyalari bo'yicha tushumlar taqsimoti" position="left" />
+                                    <InfoTooltip text="Kirim kategoriyalari bo'yicha tushumlar taqsimoti" position="left" link="/incomes" />
                                 </div>
                             </div>
                             <div className="chart-container pie-chart-container">
@@ -489,7 +493,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Binolar bo'yicha tushumlar</h3>
-                                    <InfoTooltip text="Top 5 ta bino kesimida yig'ilgan jami kirimlar" position="left" />
+                                    <InfoTooltip text="Top 5 ta bino kesimida yig'ilgan jami kirimlar" position="left" link="/incomes/buildings" />
                                 </div>
                             </div>
                             <div className="chart-container">
@@ -517,7 +521,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Kunlik chiqimlar trendi</h3>
-                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik xarajatlar (chiqimlar) hajmi o'zgarishi" position="left" />
+                                    <InfoTooltip text="Oxirgi 7 kun davomida kunlik xarajatlar (chiqimlar) hajmi o'zgarishi" position="left" link="/expenses" />
                                 </div>
                             </div>
                             <div className="chart-container">
@@ -537,7 +541,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Xarajat turlari</h3>
-                                    <InfoTooltip text="Chiqim kategoriyalari bo'yicha xarajatlar taqsimoti" position="left" />
+                                    <InfoTooltip text="Chiqim kategoriyalari bo'yicha xarajatlar taqsimoti" position="left" link="/expenses" />
                                 </div>
                             </div>
                             <div className="chart-container pie-chart-container">
@@ -556,7 +560,7 @@ const Dashboard = () => {
                             <div className="chart-header">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <h3>Binolar bo'yicha chiqimlar</h3>
-                                    <InfoTooltip text="Top 5 ta bino kesimida amalga oshirilgan jami chiqimlar" position="left" />
+                                    <InfoTooltip text="Top 5 ta bino kesimida amalga oshirilgan jami chiqimlar" position="left" link="/expenses/buildings" />
                                 </div>
                             </div>
                             <div className="chart-container">
@@ -596,11 +600,37 @@ const InfoIcon = () => (
     </svg>
 );
 
-const InfoTooltip = ({ text, position = 'top' }) => {
+const InfoTooltip = ({ text, position = 'top', link }) => {
+    const navigate = useNavigate();
+    
+    const handleRedirect = (e) => {
+        if (link) {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(link);
+        }
+    };
+
     return (
-        <div className={`tooltip-container tooltip-${position}`}>
-            <InfoIcon />
-            <span className="tooltip-text">{text}</span>
+        <div className="tooltip-and-redirect-wrapper">
+            {link && (
+                <button 
+                    onClick={handleRedirect} 
+                    className="tooltip-redirect-btn" 
+                    title="Batafsil ko'rish"
+                    aria-label="Batafsil ko'rish"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="redirect-icon-svg">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                </button>
+            )}
+            <div className={`tooltip-container tooltip-${position}`}>
+                <InfoIcon />
+                <span className="tooltip-text">{text}</span>
+            </div>
         </div>
     );
 };
