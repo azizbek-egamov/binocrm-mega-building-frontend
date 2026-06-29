@@ -16,11 +16,13 @@ import {
 import './Contracts.css';
 import usePageTitle from '../../hooks/usePageTitle';
 import ContractFilterDrawer from './components/ContractFilterDrawer';
+import { useAuth } from '../../context/AuthContext';
 
 const ContractsList = () => {
     usePageTitle('Shartnomalar');
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
 
     const [contracts, setContracts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -379,7 +381,7 @@ const ContractsList = () => {
                                                         >
                                                             <EyeIcon />
                                                         </button>
-                                                        {contract.status !== 'cancelled' ? (
+                                                        {contract.status !== 'cancelled' || user?.is_superuser ? (
                                                             <button className="btn-icon btn-edit" title="Tahrirlash" onClick={() => navigate(`/contracts/${contract.id}/edit`)}>
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>

@@ -10,6 +10,7 @@ import PaymentForm from "./components/PaymentForm";
 import ContractInfoForm from "./components/ContractInfoForm";
 import { ChevronLeftIcon, SaveIcon } from "./ContractIcons";
 import "./ContractCreate.css";
+import { useAuth } from "../../context/AuthContext";
 
 // Format YYYY-MM-DD to DD.MM.YYYY
 const formatDateForDisplay = (dateStr) => {
@@ -32,6 +33,7 @@ const ContractEdit = () => {
   const { id } = useParams();
   usePageTitle(`Shartnomani tahrirlash`);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -379,7 +381,7 @@ const ContractEdit = () => {
           >
             {contract?.status === "cancelled" ? "Orqaga" : "Bekor qilish"}
           </button>
-          {contract?.status !== "cancelled" && (
+          {(contract?.status !== "cancelled" || user?.is_superuser) && (
             <button
               className="btn-primary"
               onClick={handleSubmit}
@@ -433,10 +435,12 @@ const ContractEdit = () => {
           {contract?.status === "cancelled" && (
             <span
               className="status-alert-hint"
-              style={{ color: "var(--error-color, #ef4444)" }}
+              style={{ color: user?.is_superuser ? "var(--warning-color, #f59e0b)" : "var(--error-color, #ef4444)" }}
             >
-              ⚠️ Bu shartnoma bekor qilingan. O'zgartirib bo'lmaydi. Yangi
-              shartnoma rasmiylashtiring.
+              {user?.is_superuser 
+                ? "⚠️ Bu shartnoma bekor qilingan. Superadmin sifatida siz uni qayta rasmiylashtirishingiz mumkin." 
+                : "⚠️ Bu shartnoma bekor qilingan. O'zgartirib bo'lmaydi. Yangi shartnoma rasmiylashtiring."
+              }
             </span>
           )}
         </div>
