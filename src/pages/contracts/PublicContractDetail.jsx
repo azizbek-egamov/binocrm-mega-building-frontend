@@ -121,14 +121,39 @@ const PublicContractDetail = () => {
         const svgCenterX = svgWidth / 2;
         const coloredEls = [];
         
+        // Helper to parse color to hex (handles direct attributes, inline styles, stylesheets, and RGB conversions)
+        const getElementColor = (element) => {
+            let color = element.getAttribute('fill') || element.getAttribute('stroke') || '';
+            if (!color && element.style) {
+                color = element.style.fill || element.style.stroke || '';
+            }
+            if (!color) {
+                try {
+                    const computed = window.getComputedStyle(element);
+                    color = computed.fill || computed.stroke || '';
+                } catch (e) {}
+            }
+            color = color.trim().toLowerCase();
+            if (color.startsWith('rgb')) {
+                const matches = color.match(/\d+/g);
+                if (matches && matches.length >= 3) {
+                    const r = parseInt(matches[0]).toString(16).padStart(2, '0');
+                    const g = parseInt(matches[1]).toString(16).padStart(2, '0');
+                    const b = parseInt(matches[2]).toString(16).padStart(2, '0');
+                    return `#${r}${g}${b}`;
+                }
+            }
+            if (color.startsWith('#') && color.length === 4) {
+                return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
+            }
+            return color;
+        };
+
         // Find path, rect, polygon elements
         svg.querySelectorAll('path, rect, polygon').forEach(el => {
-            const fill = (el.getAttribute('fill') || '').toLowerCase();
-            const stroke = (el.getAttribute('stroke') || '').toLowerCase();
-            const targetFill = fill || stroke;
-            
+            const targetFill = getElementColor(el);
             const isAptColor = (c) => ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'].includes(c);
-            if (targetFill && isAptColor(targetFill)) {
+            if (isAptColor(targetFill)) {
                 // Calculate element center
                 const bbox = el.getBBox();
                 const center = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
