@@ -145,127 +145,99 @@ const PublicContractDetail = () => {
         svg.style.display = 'block';
         svg.style.shapeRendering = 'geometricPrecision';
 
-        const svgWidth = svg.viewBox?.baseVal?.width || 1190;
-        const svgCenterX = svgWidth / 2;
-        const coloredEls = [];
-        
-        const APT_COLORS = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
-
-        // Normalise a colour string to lowercase 6-digit hex (handles rgb(), 3-digit hex, etc.)
-        const toHex = (color) => {
-            if (!color) return '';
-            color = color.trim().toLowerCase();
-            if (color.startsWith('rgb')) {
-                const nums = color.match(/\d+/g);
-                if (nums && nums.length >= 3) {
-                    return '#' + [nums[0], nums[1], nums[2]]
-                        .map(n => parseInt(n).toString(16).padStart(2, '0'))
-                        .join('');
-                }
-            }
-            if (color.startsWith('#') && color.length === 4) {
-                return '#' + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
-            }
-            return color;
-        };
-
-        // Resolve the original (design-time) fill of an element.
-        // Priority: fill attribute > class-based CSS rule > inline style > computed style
-        const getElementColor = (element) => {
-            // 1. Direct fill attribute (most reliable, always present in non-optimised SVGs)
-            const fillAttr = element.getAttribute('fill');
-            if (fillAttr && fillAttr !== 'none' && fillAttr !== 'inherit') {
-                return toHex(fillAttr);
-            }
-
-            // 2. CSS class map (populated by parsing <style> blocks before inject)
-            const classList = element.getAttribute('class') || '';
-            for (const cls of classList.trim().split(/\s+/)) {
-                const mapped = cssColorMapRef['.' + cls];
-                if (mapped) return toHex(mapped);
-            }
-            // Also check id-based rules
-            const elId = element.getAttribute('id');
-            if (elId && cssColorMapRef['#' + elId]) return toHex(cssColorMapRef['#' + elId]);
-
-            // 3. Inline style fill
-            if (element.style && element.style.fill && element.style.fill !== 'inherit') {
-                return toHex(element.style.fill);
-            }
-
-            return '';
-        };
-
-        // Collect all apartment-coloured shapes
-        svg.querySelectorAll('path, rect, polygon, ellipse').forEach(el => {
-            const color = getElementColor(el);
-            if (APT_COLORS.includes(color)) {
-                try {
-                    const bbox = el.getBBox();
-                    if (bbox.width > 0 && bbox.height > 0) {
-                        const center = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
-                        // Store original color on the element so highlight step can use it
-                        el.dataset.originalColor = color;
-                        coloredEls.push({ el, fill: color, center });
-                    }
-                } catch (e) { /* getBBox fails on hidden elements – skip */ }
-            }
-        });
+        const viewBox = svg.viewBox?.baseVal;
+        const svgWidth = viewBox?.width || 1190;
+        const svgHeight = viewBox?.height || 841;
+        // Minimum area in SVG units² to be considered an apartment block
+        // (avoids picking up tiny walls, stairs, hatching lines etc.)
+        const MIN_APT_AREA = svgWidth * svgHeight * 0.015; // ~1.5% of total SVG area
 
         const floorNum = Number(home.floor);
         const padezNum = Number(home.padez);
 
-        // Map elements function
-        const mapElements = (elements, floorHomes, colorOrder) => {
-            if (!elements.length || !floorHomes.length) return;
-            const byColor = {};
-            elements.forEach(e => {
-                if (!byColor[e.fill]) byColor[e.fill] = [];
-                byColor[e.fill].push(e);
-            });
+        // Helper to sort homes by numeric part of their number
+        const sortByNum = (list) => [...list].sort((a, b) => {
+            const na = parseInt(String(a.number).replace(/\D/g, '')) || 0;
+            const nb = parseInt(String(b.number).replace(/\D/g, '')) || 0;
+            return na - nb;
+        });
 
-            let idx = 0;
-            colorOrder.forEach(targetColor => {
-                if (idx >= floorHomes.length) return;
-                const matches = byColor[targetColor];
-                if (matches && matches.length > 0) {
-                    const mappedHome = floorHomes[idx++];
-                    matches.forEach(({ el }) => {
-                        el.dataset.homeId = mappedHome.id;
-                        el.__home = mappedHome;
-                    });
-                    delete byColor[targetColor];
+        // -----------------------------------------------------------------
+        // GEOMETRY-BASED APARTMENT DETECTION
+        // SVG contains only architectural lines – no apartment fill colors.
+        // Strategy: find all <path> elements with a solid filled area larger
+        // than MIN_APT_AREA that are NOT transparent (fill-opacity > 0) and
+        // are NOT using fill="none".  These are the apartment blocks.
+        // -----------------------------------------------------------------
+        const aptCandidates = [];
+        svg.querySelectorAll('path, rect, polygon').forEach(el => {
+            const fillAttr = (el.getAttribute('fill') || '').toLowerCase();
+            const fillOpacity = parseFloat(el.getAttribute('fill-opacity') || '1');
+            // Skip elements with no fill or fully transparent
+            if (fillAttr === 'none' || fillOpacity === 0) return;
+            // Also skip tiny dashes/hatches; require a solid fill present or default black
+            try {
+                const bbox = el.getBBox();
+                const area = bbox.width * bbox.height;
+                if (area >= MIN_APT_AREA) {
+                    const cx = bbox.x + bbox.width / 2;
+                    const cy = bbox.y + bbox.height / 2;
+                    aptCandidates.push({ el, cx, cy, area, bbox });
                 }
+            } catch (e) { /* hidden / detached elements */ }
+        });
+
+        if (aptCandidates.length === 0) {
+            // Fallback: lower threshold to 0.5% and try again
+            svg.querySelectorAll('path, rect, polygon').forEach(el => {
+                const fillAttr = (el.getAttribute('fill') || '').toLowerCase();
+                if (fillAttr === 'none') return;
+                try {
+                    const bbox = el.getBBox();
+                    const area = bbox.width * bbox.height;
+                    if (area >= svgWidth * svgHeight * 0.005) {
+                        aptCandidates.push({ el, cx: bbox.x + bbox.width/2, cy: bbox.y + bbox.height/2, area, bbox });
+                    }
+                } catch(e){}
             });
-        };
-
-        // Helper to sort homes by their numeric values (handling letters/suffixes safely)
-        const sortHomesNumerically = (homesList) => {
-            return [...homesList].sort((a, b) => {
-                const aNum = parseInt(String(a.number).replace(/\D/g, '')) || 0;
-                const bNum = parseInt(String(b.number).replace(/\D/g, '')) || 0;
-                return aNum - bNum;
-            });
-        };
-
-        // Standard logic for mapping homes on qavat
-        if (floorNum <= 2) {
-            const currentPadezHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === padezNum));
-            const colorOrder = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
-            mapElements(coloredEls, currentPadezHomes, colorOrder);
-        } else {
-            // Left side (x < centerX) is Padez 1
-            const leftHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === 1));
-            const leftColors = ['#6464ff', '#50ab5b', '#ff6a6a'];
-            mapElements(coloredEls.filter(e => e.center.x < svgCenterX), leftHomes, leftColors);
-
-            // Right side (x >= centerX) is Padez 2
-            const rightHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === 2));
-            const rightColors = ['#83aefe', '#50ab5b', '#ff952b'];
-            mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightHomes, rightColors);
         }
 
-        // Stylize texts inside SVG
+        if (aptCandidates.length === 0) return; // nothing to work with
+
+        // Sort candidates: for floors 1-2 use Y (top-first); for 3-7 split by X then Y
+        if (floorNum <= 2) {
+            // Single padez per SVG file – sort top→bottom
+            const padezHomes = sortByNum(planData.homes.filter(h => Number(h.padez) === padezNum));
+            const sorted = [...aptCandidates].sort((a, b) => a.cy - b.cy);
+            sorted.slice(0, padezHomes.length).forEach(({ el }, i) => {
+                el.dataset.homeId = padezHomes[i].id;
+                el.__home = padezHomes[i];
+            });
+        } else {
+            // Dual-padez SVG: split candidates by X into left (padez 1) and right (padez 2)
+            const svgCenterX = svgWidth / 2;
+            const leftCandidates = aptCandidates.filter(c => c.cx < svgCenterX);
+            const rightCandidates = aptCandidates.filter(c => c.cx >= svgCenterX);
+
+            const padez1Homes = sortByNum(planData.homes.filter(h => Number(h.padez) === 1));
+            const padez2Homes = sortByNum(planData.homes.filter(h => Number(h.padez) === 2));
+
+            // Padez 1 (left): config says "pastdan yuqoriga" – sort bottom→top (ascending Y reversed)
+            const leftSorted = [...leftCandidates].sort((a, b) => b.cy - a.cy);
+            leftSorted.slice(0, padez1Homes.length).forEach(({ el }, i) => {
+                el.dataset.homeId = padez1Homes[i].id;
+                el.__home = padez1Homes[i];
+            });
+
+            // Padez 2 (right): config says "yuqoridan pastga" – sort top→bottom
+            const rightSorted = [...rightCandidates].sort((a, b) => a.cy - b.cy);
+            rightSorted.slice(0, padez2Homes.length).forEach(({ el }, i) => {
+                el.dataset.homeId = padez2Homes[i].id;
+                el.__home = padez2Homes[i];
+            });
+        }
+
+        // Stylize text labels
         svg.querySelectorAll('text').forEach(t => {
             const fillAttr = (t.getAttribute('fill') || '').toLowerCase();
             if (fillAttr === '#d90005' || t.getAttribute('font-weight') === 'bold') {
@@ -280,15 +252,12 @@ const PublicContractDetail = () => {
             }
         });
 
-        // Apply highlight – use cssText with !important so nothing in the SVG can override it
+        // Apply highlight – use cssText with !important so SVG presentation attrs cannot override
         svg.querySelectorAll('[data-home-id]').forEach(el => {
             const elHome = el.__home;
             if (!elHome) return;
-
             const isPurchasedHome = String(elHome.id) === String(home.id);
-
             if (isPurchasedHome) {
-                // Force purple via attribute AND inline cssText with !important
                 el.setAttribute('fill', '#7c3aed');
                 el.setAttribute('stroke', '#ffffff');
                 el.setAttribute('stroke-width', '2');
