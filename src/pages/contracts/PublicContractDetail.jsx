@@ -49,6 +49,8 @@ const PublicContractDetail = () => {
     const [svgPan, setSvgPan] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const dragStart = useRef({ x: 0, y: 0 });
+    // CSS class-to-color map parsed from SVG <style> blocks BEFORE they are stripped
+    const [cssColorMapRef, setCssColorMapRef] = useState({});
 
     useEffect(() => {
         loadPublicData();
@@ -89,10 +91,36 @@ const PublicContractDetail = () => {
                     transformResponse: [(d) => d],
                 });
                 
+                // We need to parse CSS class color map BEFORE stripping style blocks
+                // Extract fill colors defined in <style> blocks for each class/id
+                const cssColorMap = {};
+                const styleBlockMatches = svgRes.data.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+                if (styleBlockMatches) {
+                    styleBlockMatches.forEach(styleBlock => {
+                        // Match .className { ... fill: #color ... } patterns
+                        const classRuleRegex = /\.([\w-]+)\s*\{[^}]*fill\s*:\s*([^;}\/]+)/gi;
+                        let m;
+                        while ((m = classRuleRegex.exec(styleBlock)) !== null) {
+                            cssColorMap['.' + m[1]] = m[2].trim().toLowerCase();
+                        }
+                        // Also match #id { fill: ... } patterns  
+                        const idRuleRegex = /#([\w-]+)\s*\{[^}]*fill\s*:\s*([^;}\/]+)/gi;
+                        while ((m = idRuleRegex.exec(styleBlock)) !== null) {
+                            cssColorMap['#' + m[1]] = m[2].trim().toLowerCase();
+                        }
+                    });
+                }
+                setCssColorMapRef(cssColorMap);
+                
                 let cleaned = svgRes.data
                     .replace(/<filter[\s\S]*?<\/filter>/gi, '')
                     .replace(/filter="url\(.*?\)"/gi, '')
-                    .replace(/filter:.*?;/gi, '');
+                    .replace(/filter:.*?;/gi, '')
+                    // Strip fill rules from <style> blocks so they can't override our inline styles
+                    .replace(/(<style[^>]*>[\s\S]*?)<\/style>/gi, (match) => {
+                        return match
+                            .replace(/fill\s*:[^;}\/]+[;}/]/gi, (m) => m.replace(/fill\s*:[^;}\/]+/, 'fill:inherit'))
+                    });
                     
                 setSvgContent(cleaned);
             }
@@ -121,26 +149,18 @@ const PublicContractDetail = () => {
         const svgCenterX = svgWidth / 2;
         const coloredEls = [];
         
-        // Helper to parse color to hex (handles direct attributes, inline styles, stylesheets, and RGB conversions)
-        const getElementColor = (element) => {
-            let color = element.getAttribute('fill') || element.getAttribute('stroke') || '';
-            if (!color && element.style) {
-                color = element.style.fill || element.style.stroke || '';
-            }
-            if (!color) {
-                try {
-                    const computed = window.getComputedStyle(element);
-                    color = computed.fill || computed.stroke || '';
-                } catch (e) {}
-            }
+        const APT_COLORS = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
+
+        // Normalise a colour string to lowercase 6-digit hex (handles rgb(), 3-digit hex, etc.)
+        const toHex = (color) => {
+            if (!color) return '';
             color = color.trim().toLowerCase();
             if (color.startsWith('rgb')) {
-                const matches = color.match(/\d+/g);
-                if (matches && matches.length >= 3) {
-                    const r = parseInt(matches[0]).toString(16).padStart(2, '0');
-                    const g = parseInt(matches[1]).toString(16).padStart(2, '0');
-                    const b = parseInt(matches[2]).toString(16).padStart(2, '0');
-                    return `#${r}${g}${b}`;
+                const nums = color.match(/\d+/g);
+                if (nums && nums.length >= 3) {
+                    return '#' + [nums[0], nums[1], nums[2]]
+                        .map(n => parseInt(n).toString(16).padStart(2, '0'))
+                        .join('');
                 }
             }
             if (color.startsWith('#') && color.length === 4) {
@@ -149,15 +169,46 @@ const PublicContractDetail = () => {
             return color;
         };
 
-        // Find path, rect, polygon elements
-        svg.querySelectorAll('path, rect, polygon').forEach(el => {
-            const targetFill = getElementColor(el);
-            const isAptColor = (c) => ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'].includes(c);
-            if (isAptColor(targetFill)) {
-                // Calculate element center
-                const bbox = el.getBBox();
-                const center = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
-                coloredEls.push({ el, fill: targetFill, center });
+        // Resolve the original (design-time) fill of an element.
+        // Priority: fill attribute > class-based CSS rule > inline style > computed style
+        const getElementColor = (element) => {
+            // 1. Direct fill attribute (most reliable, always present in non-optimised SVGs)
+            const fillAttr = element.getAttribute('fill');
+            if (fillAttr && fillAttr !== 'none' && fillAttr !== 'inherit') {
+                return toHex(fillAttr);
+            }
+
+            // 2. CSS class map (populated by parsing <style> blocks before inject)
+            const classList = element.getAttribute('class') || '';
+            for (const cls of classList.trim().split(/\s+/)) {
+                const mapped = cssColorMapRef['.' + cls];
+                if (mapped) return toHex(mapped);
+            }
+            // Also check id-based rules
+            const elId = element.getAttribute('id');
+            if (elId && cssColorMapRef['#' + elId]) return toHex(cssColorMapRef['#' + elId]);
+
+            // 3. Inline style fill
+            if (element.style && element.style.fill && element.style.fill !== 'inherit') {
+                return toHex(element.style.fill);
+            }
+
+            return '';
+        };
+
+        // Collect all apartment-coloured shapes
+        svg.querySelectorAll('path, rect, polygon, ellipse').forEach(el => {
+            const color = getElementColor(el);
+            if (APT_COLORS.includes(color)) {
+                try {
+                    const bbox = el.getBBox();
+                    if (bbox.width > 0 && bbox.height > 0) {
+                        const center = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+                        // Store original color on the element so highlight step can use it
+                        el.dataset.originalColor = color;
+                        coloredEls.push({ el, fill: color, center });
+                    }
+                } catch (e) { /* getBBox fails on hidden elements – skip */ }
             }
         });
 
@@ -229,33 +280,29 @@ const PublicContractDetail = () => {
             }
         });
 
-        // Apply colors to highlight the purchased home
+        // Apply highlight – use cssText with !important so nothing in the SVG can override it
         svg.querySelectorAll('[data-home-id]').forEach(el => {
             const elHome = el.__home;
             if (!elHome) return;
-            
+
             const isPurchasedHome = String(elHome.id) === String(home.id);
-            
+
             if (isPurchasedHome) {
-                // Highlight with distinct, premium violet color
-                el.style.fill = '#7c3aed';
+                // Force purple via attribute AND inline cssText with !important
                 el.setAttribute('fill', '#7c3aed');
-                el.style.stroke = '#ffffff';
-                el.style.strokeWidth = '2px';
-                el.style.fillOpacity = '1';
-                
-                // Add pulse / special visual accent via inline shadow if possible
-                el.style.filter = 'drop-shadow(0 0 8px rgba(124, 58, 237, 0.6))';
+                el.setAttribute('stroke', '#ffffff');
+                el.setAttribute('stroke-width', '2');
+                el.setAttribute('fill-opacity', '1');
+                el.style.cssText = 'fill: #7c3aed !important; stroke: #ffffff !important; stroke-width: 2px !important; fill-opacity: 1 !important; filter: drop-shadow(0 0 10px rgba(124,58,237,0.7)) !important;';
             } else {
-                // Dim other homes to make the purchased one stand out
-                el.style.fill = '#475569';
                 el.setAttribute('fill', '#475569');
-                el.style.fillOpacity = '0.25';
-                el.style.stroke = '#334155';
-                el.style.strokeWidth = '0.5px';
+                el.setAttribute('fill-opacity', '0.22');
+                el.setAttribute('stroke', '#334155');
+                el.setAttribute('stroke-width', '0.5');
+                el.style.cssText = 'fill: #475569 !important; fill-opacity: 0.22 !important; stroke: #334155 !important; stroke-width: 0.5px !important;';
             }
         });
-    }, [svgContent, planData, home]);
+    }, [svgContent, planData, home, cssColorMapRef]);
 
     // Handle SVG zoom controls
     const zoomIn = () => setSvgScale(prev => Math.min(prev + 0.25, 3));
