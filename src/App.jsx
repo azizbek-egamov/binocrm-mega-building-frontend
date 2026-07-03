@@ -36,6 +36,7 @@ import IncomeCategories from "./pages/incomes/IncomeCategories";
 import IncomeCategoryDetails from "./pages/incomes/IncomeCategoryDetails";
 import BuildingIncomes from "./pages/incomes/BuildingIncomes";
 import PublicFormPage from "./pages/forms/PublicFormPage";
+import PublicContractDetail from "./pages/contracts/PublicContractDetail";
 import "./index.css";
 
 // Layout wrapper for protected routes
@@ -281,6 +282,9 @@ function App() {
 
               {/* Public Form - No Authentication */}
               <Route path="/f/:slug" element={<PublicFormPage />} />
+
+              {/* Public Contract Detail - No Authentication */}
+              <Route path="/public/contract/:token" element={<PublicContractDetail />} />
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

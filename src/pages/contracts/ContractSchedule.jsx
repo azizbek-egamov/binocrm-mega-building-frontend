@@ -623,6 +623,33 @@ const ContractSchedule = () => {
             <span className="label">To'lov sanasi</span>
           </div>
         </div>
+        {contract.qr_code && (
+          <div 
+            className="stat-card" 
+            style={{ cursor: "pointer" }}
+            onClick={() => window.open(`/public/contract/${contract.token}`, "_blank")}
+            title="Skanerlash orqali mijoz sahifasini ko'rish uchun bosing"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+              <img 
+                src={contract.qr_code} 
+                alt="QR Code" 
+                style={{ 
+                  width: "42px", 
+                  height: "42px", 
+                  borderRadius: "6px", 
+                  background: "#fff",
+                  padding: "2px",
+                  border: "1px solid var(--border-color)"
+                }} 
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <span className="value" style={{ fontSize: "14px", fontWeight: "700" }}>QR Kod</span>
+                <span className="label" style={{ fontSize: "11px", display: "block" }}>Mijoz havolasi</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Edit Mode Controls */}

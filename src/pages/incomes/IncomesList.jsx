@@ -6,6 +6,7 @@ import { getFinanceUsers } from '../../services/users';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import DateRangeFilter from '../../components/common/DateRangeFilter';
+import AmountRangeFilter from '../../components/common/AmountRangeFilter';
 import './Incomes.css';
 
 // Reusable Icons
@@ -31,6 +32,7 @@ const IncomesList = () => {
     const [users, setUsers] = useState([]);
     const [userFilter, setUserFilter] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [amountRange, setAmountRange] = useState({ min: '', max: '' });
     const [stats, setStats] = useState({ total: 0, count: 0, avg: 0 });
     
     const [page, setPage] = useState(1);
@@ -69,7 +71,7 @@ const IncomesList = () => {
 
     useEffect(() => {
         loadIncomes();
-    }, [page, search, buildingFilter, categoryFilter, userFilter, dateRange]);
+    }, [page, search, buildingFilter, categoryFilter, userFilter, dateRange, amountRange]);
 
     const loadBaseData = async () => {
         try {
@@ -103,7 +105,9 @@ const IncomesList = () => {
                 user: userFilter,
                 search: search,
                 start_date: dateRange.start,
-                end_date: dateRange.end
+                end_date: dateRange.end,
+                min_amount: amountRange.min,
+                max_amount: amountRange.max
             };
             const pageParams = { ...filterParams, page: page, page_size: pageSize };
             const [data, statsData] = await Promise.all([
@@ -388,13 +392,22 @@ const IncomesList = () => {
                     </div>
                 </div>
 
-                <DateRangeFilter 
-                    onFilter={(range) => {
-                        setDateRange(range);
-                        setPage(1);
-                    }}
-                    initialRange={dateRange}
-                />
+                <div className="sidebar-container">
+                    <AmountRangeFilter 
+                        onFilter={(range) => {
+                            setAmountRange(range);
+                            setPage(1);
+                        }}
+                        initialRange={amountRange}
+                    />
+                    <DateRangeFilter 
+                        onFilter={(range) => {
+                            setDateRange(range);
+                            setPage(1);
+                        }}
+                        initialRange={dateRange}
+                    />
+                </div>
             </div>
 
             {/* Create/Edit Modal */}

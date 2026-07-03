@@ -6,6 +6,7 @@ import { getFinanceUsers } from '../../services/users';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import DateRangeFilter from '../../components/common/DateRangeFilter';
+import AmountRangeFilter from '../../components/common/AmountRangeFilter';
 import './Expenses.css';
 
 // Reusable Icons
@@ -31,6 +32,7 @@ const ExpensesList = () => {
     const [userFilter, setUserFilter] = useState('');
     const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
     const [dateRange, setDateRange] = useState({ start: '', end: '' });
+    const [amountRange, setAmountRange] = useState({ min: '', max: '' });
     const [stats, setStats] = useState({ total: 0, count: 0, avg: 0 });
     
     const [modal, setModal] = useState({ open: false, type: null, item: null });
@@ -59,7 +61,7 @@ const ExpensesList = () => {
 
     useEffect(() => {
         loadExpenses();
-    }, [page, search, buildingFilter, categoryFilter, userFilter, paymentMethodFilter, dateRange]);
+    }, [page, search, buildingFilter, categoryFilter, userFilter, paymentMethodFilter, dateRange, amountRange]);
 
     const loadBaseData = async () => {
         try {
@@ -86,7 +88,9 @@ const ExpensesList = () => {
                 payment_method: paymentMethodFilter || undefined,
                 search: search,
                 start_date: dateRange.start,
-                end_date: dateRange.end
+                end_date: dateRange.end,
+                min_amount: amountRange.min,
+                max_amount: amountRange.max
             };
             const pageParams = { ...filterParams, page: page, page_size: pageSize };
             const [data, statsData] = await Promise.all([
@@ -357,13 +361,22 @@ const ExpensesList = () => {
                     </div>
                 </div>
 
-                <DateRangeFilter 
-                    onFilter={(range) => {
-                        setDateRange(range);
-                        setPage(1);
-                    }}
-                    initialRange={dateRange}
-                />
+                <div className="sidebar-container">
+                    <AmountRangeFilter 
+                        onFilter={(range) => {
+                            setAmountRange(range);
+                            setPage(1);
+                        }}
+                        initialRange={amountRange}
+                    />
+                    <DateRangeFilter 
+                        onFilter={(range) => {
+                            setDateRange(range);
+                            setPage(1);
+                        }}
+                        initialRange={dateRange}
+                    />
+                </div>
             </div>
 
             {/* Create/Edit Modal */}

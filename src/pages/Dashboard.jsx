@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { analyticsService } from '../services/analytics';
+import { getAllBuildings } from '../services/buildings';
 import { AmBarChart, AmAreaChart, AmPieChart, NoData } from '../components/AmCharts';
 import FunnelChart from '../components/FunnelChart';
 import './Dashboard.css';
@@ -16,9 +17,73 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('monthly');
 
+    // New states for Contract stats and building filter
+    const [buildings, setBuildings] = useState([]);
+    const [selectedBuildings, setSelectedBuildings] = useState([]);
+    const [contractsSummary, setContractsSummary] = useState(null);
+    const [contractsSummaryLoading, setContractsSummaryLoading] = useState(true);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
     useEffect(() => {
         fetchSummary();
+        fetchBuildings();
     }, []);
+
+    useEffect(() => {
+        fetchContractsSummary();
+    }, [selectedBuildings]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.multi-select-container')) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    const fetchBuildings = async () => {
+        try {
+            const data = await getAllBuildings({ include_archived: true });
+            setBuildings(data);
+            // Default to only non-archived buildings being selected on load
+            const activeIds = data.filter(b => !b.is_archived).map(b => b.id);
+            setSelectedBuildings(activeIds);
+        } catch (error) {
+            console.error("Error fetching buildings:", error);
+        }
+    };
+
+    const fetchContractsSummary = async () => {
+        setContractsSummaryLoading(true);
+        try {
+            const params = {};
+            if (selectedBuildings.length > 0) {
+                params.building_ids = selectedBuildings.join(',');
+            }
+            const res = await analyticsService.getContractsSummary(params);
+            setContractsSummary(res.data);
+        } catch (error) {
+            console.error("Error fetching contracts summary:", error);
+        } finally {
+            setContractsSummaryLoading(false);
+        }
+    };
+
+    const toggleBuilding = (id) => {
+        setSelectedBuildings(prev => 
+            prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]
+        );
+    };
+
+    const clearSelectedBuildings = () => {
+        setSelectedBuildings([]);
+    };
+
+    const selectAllBuildings = () => {
+        setSelectedBuildings(buildings.map(b => b.id));
+    };
 
     const fetchSummary = async () => {
         try {
@@ -37,6 +102,12 @@ const Dashboard = () => {
 
     const canViewIncomes = user?.is_superuser || user?.permissions?.can_view_incomes;
     const canViewExpenses = user?.is_superuser || user?.permissions?.can_view_expenses;
+
+    // ─── Stabilized chart data references (prevents re-animation on unrelated state changes) ───
+    const homeFunnelData = useMemo(() => summary?.homes_funnel || [], [summary?.homes_funnel]);
+    const buildingOccupancyData = useMemo(() => summary?.building_occupancy || [], [summary?.building_occupancy]);
+    const weeklyTrendData = useMemo(() => summary?.weekly_trend || [], [summary?.weekly_trend]);
+    const leadSourcesData = useMemo(() => summary?.lead_sources || [], [summary?.lead_sources]);
 
     const stats = [
         { label: 'Binolar', value: summary?.buildings_count || '0', color: 'primary', icon: 'building', tooltip: 'Tizimdagi jami arxivlanmagan binolar soni', link: '/buildings' },
@@ -127,6 +198,138 @@ const Dashboard = () => {
                         </div>
                     </div>
                 ))}
+            </section>
+
+            {/* Shartnomalar savdosi ko'rsatkichlari */}
+            <div className="contracts-section-header">
+                <div className="section-title">Shartnomalar savdosi ko'rsatkichlari</div>
+                <div className="multi-select-container">
+                    <button 
+                        className={`multi-select-trigger ${isDropdownOpen ? 'active' : ''}`}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                        <span>
+                            {selectedBuildings.length === 0 
+                                ? "Barcha binolar" 
+                                : selectedBuildings.length === buildings.length
+                                ? "Barcha binolar tanlandi"
+                                : `${selectedBuildings.length} ta bino tanlandi`
+                            }
+                        </span>
+                        <ChevronDownIcon />
+                    </button>
+                    {isDropdownOpen && (
+                        <div className="multi-select-dropdown">
+                            <div className="multi-select-actions">
+                                <button 
+                                    className="multi-select-action-btn"
+                                    onClick={selectAllBuildings}
+                                >
+                                    Barchasini tanlash
+                                </button>
+                                {selectedBuildings.length > 0 && (
+                                    <button 
+                                        className="multi-select-action-btn"
+                                        onClick={clearSelectedBuildings}
+                                    >
+                                        Tozalash
+                                    </button>
+                                )}
+                            </div>
+                            <div className="multi-select-list">
+                                {buildings.map(b => {
+                                    const isChecked = selectedBuildings.includes(b.id);
+                                    return (
+                                        <div 
+                                            key={b.id} 
+                                            className={`multi-select-option ${b.is_archived ? 'archived-option' : ''}`}
+                                            onClick={() => toggleBuilding(b.id)}
+                                        >
+                                            <div className="option-left">
+                                                <span className="building-code">{b.code}</span>
+                                                <span className="option-name">{b.name}</span>
+                                            </div>
+                                            {b.is_archived && (
+                                                <span className="archived-badge">Arxiv</span>
+                                            )}
+                                            <div className={`multi-select-checkbox ${isChecked ? 'checked' : ''}`}>
+                                                {isChecked && <CheckIcon />}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {buildings.length === 0 && (
+                                    <div style={{ padding: '8px', textAlign: 'center', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                        Binolar topilmadi
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Contracts Stats Cards Grid */}
+            <section className={`stats-grid contracts-stats-grid ${contractsSummaryLoading ? 'contracts-loading' : ''}`}>
+                {/* 1. Jami shartnomalar qiymati */}
+                <div className="stat-card stat-primary">
+                    <div className="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+                    </div>
+                    <div className="stat-info-box">
+                        <div className="stat-value-row">
+                            <span className="stat-value">
+                                {contractsSummaryLoading ? '...' : formatCurrency(contractsSummary?.total_price || 0)}
+                            </span>
+                        </div>
+                        <span className="stat-label">Jami sotuv qiymati</span>
+                    </div>
+                </div>
+
+                {/* 2. Kirim qilingan (to'langan) */}
+                <div className="stat-card stat-success">
+                    <div className="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                    </div>
+                    <div className="stat-info-box">
+                        <div className="stat-value-row">
+                            <span className="stat-value" style={{ color: 'var(--accent-success)' }}>
+                                {contractsSummaryLoading ? '...' : formatCurrency(contractsSummary?.total_paid || 0)}
+                            </span>
+                        </div>
+                        <span className="stat-label">Kirim qilingan (to'langan)</span>
+                    </div>
+                </div>
+
+                {/* 3. Qolgan qarz */}
+                <div className="stat-card stat-warning">
+                    <div className="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                    </div>
+                    <div className="stat-info-box">
+                        <div className="stat-value-row">
+                            <span className="stat-value" style={{ color: 'var(--accent-warning)' }}>
+                                {contractsSummaryLoading ? '...' : formatCurrency(contractsSummary?.total_remaining || 0)}
+                            </span>
+                        </div>
+                        <span className="stat-label">Qolgan qarz (Qoldiq)</span>
+                    </div>
+                </div>
+
+                {/* 4. Shartnomalar soni */}
+                <div className="stat-card stat-cyan">
+                    <div className="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                    </div>
+                    <div className="stat-info-box">
+                        <div className="stat-value-row">
+                            <span className="stat-value">
+                                {contractsSummaryLoading ? '...' : `${contractsSummary?.total_contracts || 0} ta`}
+                            </span>
+                        </div>
+                        <span className="stat-label">Shartnomalar soni</span>
+                    </div>
+                </div>
             </section>
 
             {/* Revenue Overview Section */}
@@ -298,7 +501,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                         <FunnelChart
-                            items={summary.homes_funnel}
+                            items={homeFunnelData}
                             maxWidth={550}
                             unit="ta uy"
                         />
@@ -315,7 +518,7 @@ const Dashboard = () => {
                     </div>
                     <div className="chart-container">
                         <AmBarChart
-                            data={summary?.building_occupancy || []}
+                            data={buildingOccupancyData}
                             xField="name"
                             yField="percentage"
                             height={300}
@@ -336,7 +539,7 @@ const Dashboard = () => {
                     </div>
                     <div className="chart-container">
                         <AmAreaChart
-                            data={summary?.weekly_trend || []}
+                            data={weeklyTrendData}
                             xField="date"
                             yField="count"
                             height={300}
@@ -356,7 +559,7 @@ const Dashboard = () => {
                     </div>
                     <div className="chart-container pie-chart-container">
                         <AmPieChart
-                            data={summary?.lead_sources || []}
+                            data={leadSourcesData}
                             nameField="heard_source"
                             valueField="count"
                             height={280}
@@ -634,5 +837,11 @@ const InfoTooltip = ({ text, position = 'top', link }) => {
         </div>
     );
 };
+
+const ChevronDownIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="chevron">
+        <polyline points="6 9 12 15 18 9" />
+    </svg>
+);
 
 export default Dashboard;

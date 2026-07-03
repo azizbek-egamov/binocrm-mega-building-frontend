@@ -19,4 +19,5 @@ export const contractService = {
     getTransactions: (id) => api.get(`/contracts/${id}/transactions/`),
     updateTransaction: (id, transactionId, data) => api.patch(`/contracts/${id}/update_transaction/${transactionId}/`, data),
     checkNumber: (params) => api.get('/contracts/check-number/', { params }),
+    getPublicDetail: (token) => api.get('/contracts/public_detail/', { params: { token } }),
 };

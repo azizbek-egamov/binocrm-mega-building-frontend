@@ -415,11 +415,20 @@ const AmPieChartBase = ({
             tooltipText: '{category}: {value}',
         });
 
+        // Custom tooltip adapter for showing bank vs cash payment method percentages
+        series.slices.template.adapters.add("tooltipText", (text, target) => {
+            const dataContext = target.dataItem?.dataContext;
+            if (dataContext && dataContext.bank_percentage !== undefined && dataContext.cash_percentage !== undefined) {
+                return `[bold]${dataContext[nameField]}[/]\nJami: {valuePercentTotal.formatNumber('0.0')}% ({value} so'm)\nTo'lov: Karta: [bold]${dataContext.bank_percentage}%[/] | Naqd: [bold]${dataContext.cash_percentage}%[/]`;
+            }
+            return text;
+        });
+
         // Tooltip wrapping
         const tooltip = series.get('tooltip');
         if (tooltip) {
             tooltip.label.setAll({
-                maxWidth: 200,
+                maxWidth: 240,
                 oversizedBehavior: 'wrap'
             });
         }
@@ -437,9 +446,19 @@ const AmPieChartBase = ({
         }));
         legend.labels.template.setAll({ 
             fontSize: 11, 
-            maxWidth: 150, 
-            oversizedBehavior: 'wrap' 
+            maxWidth: 200, 
+            oversizedBehavior: 'wrap'
         });
+
+        // Custom legend label adapter for showing bank vs cash payment method percentages
+        legend.labels.template.adapters.add("text", (text, target) => {
+            const dataContext = target.dataItem?.dataContext?.dataContext;
+            if (dataContext && dataContext.bank_percentage !== undefined && dataContext.cash_percentage !== undefined) {
+                return `${text} [font-size: 10px; #94a3b8](K: ${dataContext.bank_percentage}% | N: ${dataContext.cash_percentage}%)[/]`;
+            }
+            return text;
+        });
+
         legend.valueLabels.template.setAll({ fontSize: 11, fontWeight: '600' });
         legend.data.setAll(series.dataItems);
 

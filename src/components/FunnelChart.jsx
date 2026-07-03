@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { NoData } from './AmCharts';
 import * as am5 from '@amcharts/amcharts5';
 import * as am5percent from '@amcharts/amcharts5/percent';
@@ -18,8 +18,12 @@ const FunnelChart = ({ items = [], title, icon, height = 400 }) => {
     const chartRef = useRef(null);
     const rootRef = useRef(null);
 
-    const validItems = (items || [])
-        .filter(item => (item.count || 0) > 0);
+    // Stabilized with useMemo so the array reference doesn't change on parent re-render
+    const validItems = useMemo(
+        () => (items || []).filter(item => (item.count || 0) > 0),
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [JSON.stringify(items)]
+    );
     const hasData = validItems.length > 0;
 
     useLayoutEffect(() => {
@@ -184,7 +188,7 @@ const FunnelChart = ({ items = [], title, icon, height = 400 }) => {
         return () => {
             root.dispose();
         };
-    }, [items, hasData, validItems]);
+    }, [validItems, hasData]);
 
     // Watch for theme changes and re-render
     useEffect(() => {
@@ -242,4 +246,4 @@ const FunnelChart = ({ items = [], title, icon, height = 400 }) => {
     );
 };
 
-export default FunnelChart;
+export default React.memo(FunnelChart);

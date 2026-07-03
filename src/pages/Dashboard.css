@@ -1490,4 +1490,245 @@
 
 .tooltip-redirect-btn:hover svg.redirect-icon-svg {
     opacity: 1;
-}
+}
+
+/* ==========================================
+   CONTRACTS SALES STATS SECTION & MULTI-SELECT FILTER
+   ========================================== */
+.contracts-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 48px 0 24px;
+}
+
+.contracts-section-header .section-title {
+    margin: 0 !important;
+}
+
+/* Multi-select Dropdown styling */
+.multi-select-container {
+    position: relative;
+    user-select: none;
+}
+
+.multi-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    min-width: 220px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.multi-select-trigger:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.multi-select-trigger svg.chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+.multi-select-trigger.active svg.chevron {
+    transform: rotate(180deg);
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 280px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: var(--shadow-xl);
+    z-index: 100;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: slideUpIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.multi-select-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 6px;
+}
+
+.multi-select-action-btn {
+    background: transparent;
+    border: none;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.multi-select-action-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.multi-select-list {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+}
+
+/* Custom scrollbar for multi-select-list */
+.multi-select-list::-webkit-scrollbar {
+    width: 5px;
+}
+.multi-select-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.multi-select-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.multi-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    gap: 8px;
+}
+
+.multi-select-option:hover {
+    background: var(--bg-tertiary);
+}
+
+.option-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.option-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.option-left span.building-code {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+.multi-select-checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 2px solid var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.multi-select-checkbox.checked {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.multi-select-checkbox svg {
+    width: 10px;
+    height: 10px;
+    color: white;
+}
+
+/* Spinner inside cards while loading */
+.stat-card-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    width: 100%;
+}
+
+/* Bottom contract stats values typography matching */
+.contracts-stats-grid .stat-value {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    font-family: inherit !important;
+    letter-spacing: -0.02em;
+}
+
+/* Smooth fade while loading — no layout shift */
+.contracts-stats-grid {
+    transition: opacity 0.25s ease;
+}
+.contracts-stats-grid.contracts-loading {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* Styling for archived buildings in the filter */
+.archived-option {
+    opacity: 0.75;
+}
+
+.archived-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--accent-danger);
+    border-radius: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+

@@ -1,0 +1,53 @@
+/* ==========================================
+   AMOUNT RANGE FILTER SIDEBAR
+   ========================================== */
+
+.amount-filter-sidebar {
+    width: var(--filter-sidebar-width);
+    background: var(--filter-bg);
+    border: 1px solid var(--filter-border);
+    border-radius: var(--filter-radius);
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    box-shadow: var(--filter-shadow);
+    padding: 0;
+    overflow: hidden;
+    animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(10px);
+}
+
+.amount-filter-sidebar .premium-field-inner {
+    cursor: text;
+}
+
+.amount-filter-sidebar .premium-field-inner input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    cursor: text;
+    padding: 0;
+}
+
+.amount-filter-sidebar .premium-field-inner input::placeholder {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.amount-filter-sidebar .premium-field.focused .premium-field-inner {
+    background: var(--bg-secondary);
+    border-color: var(--filter-accent);
+    box-shadow: 0 0 0 4px var(--filter-accent-soft);
+}
+
+.currency-suffix {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--filter-accent);
+    user-select: none;
+    white-space: nowrap;
+}

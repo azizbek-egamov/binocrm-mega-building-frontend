@@ -289,11 +289,23 @@
     min-width: 0;
 }
 
+.sidebar-container {
+    width: var(--filter-sidebar-width);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 @media (max-width: 1280px) {
     .layout-with-sidebar {
         flex-direction: column-reverse;
     }
-    .date-filter-sidebar {
+    .sidebar-container {
+        width: 100%;
+    }
+    .date-filter-sidebar,
+    .amount-filter-sidebar {
         width: 100%;
         position: static;
     }

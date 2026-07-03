@@ -5,4 +5,6 @@ export const analyticsService = {
     getLeadsStats: (params) => api.get('/analytics/leads_stats/', { params }),
     getSummary: () => api.get('/analytics/summary/'),
     getFinanceStats: (params) => api.get('/analytics/finance_stats/', { params }),
+    getContractsSummary: (params) => api.get('/analytics/contracts_summary/', { params }),
 };
+
