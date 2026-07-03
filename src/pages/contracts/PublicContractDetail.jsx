@@ -132,6 +132,7 @@ const PublicContractDetail = () => {
     };
 
     // Color and map elements on the floor plan SVG
+    // Uses the EXACT same approach as FloorPlanSelector.jsx (admin panel) which works correctly
     useEffect(() => {
         if (!svgContent || !planData || !svgWrapRef.current || !home) return;
         
@@ -145,133 +146,131 @@ const PublicContractDetail = () => {
         svg.style.display = 'block';
         svg.style.shapeRendering = 'geometricPrecision';
 
-        const viewBox = svg.viewBox?.baseVal;
-        const svgWidth = viewBox?.width || 1190;
-        const svgHeight = viewBox?.height || 841;
-        // Minimum area in SVG units² to be considered an apartment block
-        // (avoids picking up tiny walls, stairs, hatching lines etc.)
-        const MIN_APT_AREA = svgWidth * svgHeight * 0.015; // ~1.5% of total SVG area
+        const APT_COLORS = ['#ff6a6a', '#83aefe', '#ff952b', '#6464ff', '#50ab5b', '#a78bfa', '#fb7185', '#38bdf8'];
+
+        function parseFill(el) {
+            const f = el.getAttribute('fill');
+            if (!f || f === 'none' || f.startsWith('url')) return null;
+            return f.toLowerCase();
+        }
+        function isAptColor(fill) { return fill && APT_COLORS.includes(fill); }
+
+        function getElementCenter(el) {
+            try {
+                const bb = el.getBBox();
+                const cx = bb.x + bb.width / 2;
+                const cy = bb.y + bb.height / 2;
+                const tr = el.getAttribute('transform');
+                if (!tr) return { x: cx, y: cy };
+                const m = tr.match(/matrix\(\s*([^)]+)\s*\)/);
+                if (!m) return { x: cx, y: cy };
+                const p = m[1].split(/[\s,]+/).map(Number);
+                if (p.length < 6) return { x: cx, y: cy };
+                return { x: p[0]*cx + p[2]*cy + p[4], y: p[1]*cx + p[3]*cy + p[5] };
+            } catch { return null; }
+        }
+
+        const svgWidth = svg.viewBox?.baseVal?.width || 1190;
+        const svgCenterX = svgWidth / 2;
+        const coloredEls = [];
+
+        svg.querySelectorAll('path, rect, polygon').forEach(el => {
+            const fill = parseFill(el);
+            if (!fill || !isAptColor(fill)) return;
+            const center = getElementCenter(el);
+            if (center) coloredEls.push({ el, fill, center });
+        });
 
         const floorNum = Number(home.floor);
         const padezNum = Number(home.padez);
 
-        // Helper to sort homes by numeric part of their number
-        const sortByNum = (list) => [...list].sort((a, b) => {
-            const na = parseInt(String(a.number).replace(/\D/g, '')) || 0;
-            const nb = parseInt(String(b.number).replace(/\D/g, '')) || 0;
-            return na - nb;
-        });
-
-        // -----------------------------------------------------------------
-        // GEOMETRY-BASED APARTMENT DETECTION
-        // SVG contains only architectural lines – no apartment fill colors.
-        // Strategy: find all <path> elements with a solid filled area larger
-        // than MIN_APT_AREA that are NOT transparent (fill-opacity > 0) and
-        // are NOT using fill="none".  These are the apartment blocks.
-        // -----------------------------------------------------------------
-        const aptCandidates = [];
-        svg.querySelectorAll('path, rect, polygon').forEach(el => {
-            const fillAttr = (el.getAttribute('fill') || '').toLowerCase();
-            const fillOpacity = parseFloat(el.getAttribute('fill-opacity') || '1');
-            // Skip elements with no fill or fully transparent
-            if (fillAttr === 'none' || fillOpacity === 0) return;
-            // Also skip tiny dashes/hatches; require a solid fill present or default black
-            try {
-                const bbox = el.getBBox();
-                const area = bbox.width * bbox.height;
-                if (area >= MIN_APT_AREA) {
-                    const cx = bbox.x + bbox.width / 2;
-                    const cy = bbox.y + bbox.height / 2;
-                    aptCandidates.push({ el, cx, cy, area, bbox });
+        function mapElements(elements, homes, colorOrder) {
+            if (!elements.length || !homes.length) return;
+            const byColor = {};
+            elements.forEach(e => {
+                if (!byColor[e.fill]) byColor[e.fill] = [];
+                byColor[e.fill].push(e);
+            });
+            let idx = 0;
+            colorOrder.forEach(targetColor => {
+                if (idx >= homes.length) return;
+                const elems = byColor[targetColor];
+                if (elems && elems.length > 0) {
+                    const mappedHome = homes[idx++];
+                    elems.forEach(({ el }) => {
+                        el.dataset.homeId = mappedHome.id;
+                        el.__home = mappedHome;
+                    });
+                    delete byColor[targetColor];
                 }
-            } catch (e) { /* hidden / detached elements */ }
-        });
-
-        if (aptCandidates.length === 0) {
-            // Fallback: lower threshold to 0.5% and try again
-            svg.querySelectorAll('path, rect, polygon').forEach(el => {
-                const fillAttr = (el.getAttribute('fill') || '').toLowerCase();
-                if (fillAttr === 'none') return;
-                try {
-                    const bbox = el.getBBox();
-                    const area = bbox.width * bbox.height;
-                    if (area >= svgWidth * svgHeight * 0.005) {
-                        aptCandidates.push({ el, cx: bbox.x + bbox.width/2, cy: bbox.y + bbox.height/2, area, bbox });
-                    }
-                } catch(e){}
             });
+            // Remaining colors → remaining homes
+            if (idx < homes.length) {
+                Object.keys(byColor).forEach(color => {
+                    if (idx >= homes.length) return;
+                    const mappedHome = homes[idx++];
+                    byColor[color].forEach(({ el }) => {
+                        el.dataset.homeId = mappedHome.id;
+                        el.__home = mappedHome;
+                    });
+                });
+            }
         }
 
-        if (aptCandidates.length === 0) return; // nothing to work with
+        function sortH(list) { return [...list].sort((a, b) => +a.number - +b.number); }
 
-        // Sort candidates: for floors 1-2 use Y (top-first); for 3-7 split by X then Y
         if (floorNum <= 2) {
-            // Single padez per SVG file – sort top→bottom
-            const padezHomes = sortByNum(planData.homes.filter(h => Number(h.padez) === padezNum));
-            const sorted = [...aptCandidates].sort((a, b) => a.cy - b.cy);
-            sorted.slice(0, padezHomes.length).forEach(({ el }, i) => {
-                el.dataset.homeId = padezHomes[i].id;
-                el.__home = padezHomes[i];
-            });
+            const padezHomes = sortH(planData.homes.filter(h => Number(h.padez) === padezNum));
+            mapElements(coloredEls, padezHomes, ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b']);
         } else {
-            // Dual-padez SVG: split candidates by X into left (padez 1) and right (padez 2)
-            const svgCenterX = svgWidth / 2;
-            const leftCandidates = aptCandidates.filter(c => c.cx < svgCenterX);
-            const rightCandidates = aptCandidates.filter(c => c.cx >= svgCenterX);
-
-            const padez1Homes = sortByNum(planData.homes.filter(h => Number(h.padez) === 1));
-            const padez2Homes = sortByNum(planData.homes.filter(h => Number(h.padez) === 2));
-
-            // Padez 1 (left): config says "pastdan yuqoriga" – sort bottom→top (ascending Y reversed)
-            const leftSorted = [...leftCandidates].sort((a, b) => b.cy - a.cy);
-            leftSorted.slice(0, padez1Homes.length).forEach(({ el }, i) => {
-                el.dataset.homeId = padez1Homes[i].id;
-                el.__home = padez1Homes[i];
-            });
-
-            // Padez 2 (right): config says "yuqoridan pastga" – sort top→bottom
-            const rightSorted = [...rightCandidates].sort((a, b) => a.cy - b.cy);
-            rightSorted.slice(0, padez2Homes.length).forEach(({ el }, i) => {
-                el.dataset.homeId = padez2Homes[i].id;
-                el.__home = padez2Homes[i];
-            });
+            const N = 11 + 6 * (floorNum - 3);
+            if (padezNum === 1) {
+                const leftH  = sortH(planData.homes.filter(h => Number(h.padez) === 1 && [N, N+1, N+2].includes(Number(h.number))));
+                const rightH = sortH(planData.homes.filter(h => Number(h.padez) === 1 && [N+3, N+4, N+5].includes(Number(h.number))));
+                mapElements(coloredEls.filter(e => e.center.x < svgCenterX),  leftH,  ['#6464ff', '#50ab5b', '#ff6a6a']);
+                mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightH, ['#83aefe', '#ff952b', '#50ab5b']);
+            } else {
+                const leftH  = sortH(planData.homes.filter(h => Number(h.padez) === 2 && [N, N+1, N+3].includes(Number(h.number))));
+                const rightH = sortH(planData.homes.filter(h => Number(h.padez) === 2 && [N+2, N+4, N+5].includes(Number(h.number))));
+                mapElements(coloredEls.filter(e => e.center.x < svgCenterX),  leftH,  ['#6464ff', '#50ab5b', '#ff6a6a']);
+                mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightH, ['#83aefe', '#ff952b', '#50ab5b']);
+            }
         }
 
-        // Stylize text labels
+        // Text styling
         svg.querySelectorAll('text').forEach(t => {
-            const fillAttr = (t.getAttribute('fill') || '').toLowerCase();
-            if (fillAttr === '#d90005' || t.getAttribute('font-weight') === 'bold') {
+            const fa = (t.getAttribute('fill') || '').toLowerCase();
+            if (fa === '#d90005' || (t.getAttribute('font-weight') === 'bold' && t.getAttribute('font-style') === 'italic')) {
                 t.style.display = 'none';
             } else {
                 t.style.fill = '#ffffff';
+                t.setAttribute('fill', '#ffffff');
                 t.style.fontWeight = '800';
-                t.style.fontSize = '12px';
                 t.style.paintOrder = 'stroke fill';
                 t.style.stroke = '#000000';
                 t.style.strokeWidth = '0.5px';
             }
         });
 
-        // Apply highlight – use cssText with !important so SVG presentation attrs cannot override
+        // Apply highlight colors
         svg.querySelectorAll('[data-home-id]').forEach(el => {
             const elHome = el.__home;
             if (!elHome) return;
-            const isPurchasedHome = String(elHome.id) === String(home.id);
-            if (isPurchasedHome) {
+            const isPurchased = String(elHome.id) === String(home.id);
+            if (isPurchased) {
                 el.setAttribute('fill', '#7c3aed');
-                el.setAttribute('stroke', '#ffffff');
-                el.setAttribute('stroke-width', '2');
                 el.setAttribute('fill-opacity', '1');
-                el.style.cssText = 'fill: #7c3aed !important; stroke: #ffffff !important; stroke-width: 2px !important; fill-opacity: 1 !important; filter: drop-shadow(0 0 10px rgba(124,58,237,0.7)) !important;';
+                el.style.fill = '#7c3aed';
+                el.style.fillOpacity = '1';
+                el.style.filter = 'drop-shadow(0 0 8px rgba(124,58,237,0.7))';
             } else {
                 el.setAttribute('fill', '#475569');
                 el.setAttribute('fill-opacity', '0.22');
-                el.setAttribute('stroke', '#334155');
-                el.setAttribute('stroke-width', '0.5');
-                el.style.cssText = 'fill: #475569 !important; fill-opacity: 0.22 !important; stroke: #334155 !important; stroke-width: 0.5px !important;';
+                el.style.fill = '#475569';
+                el.style.fillOpacity = '0.22';
             }
         });
-    }, [svgContent, planData, home, cssColorMapRef]);
+    }, [svgContent, planData, home]);
 
     // Handle SVG zoom controls
     const zoomIn = () => setSvgScale(prev => Math.min(prev + 0.25, 3));
