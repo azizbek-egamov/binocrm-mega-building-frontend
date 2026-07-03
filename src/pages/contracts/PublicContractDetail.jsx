@@ -169,24 +169,15 @@ const PublicContractDetail = () => {
             const colorOrder = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
             mapElements(coloredEls, currentPadezHomes, colorOrder);
         } else {
-            const N = 11 + 6 * (floorNum - 3);
-            if (padezNum === 1) {
-                const leftHomes = planData.homes.filter(h => h.padez === 1 && [N, N + 1, N + 2].includes(Number(h.number))).sort((a, b) => +a.number - +b.number);
-                const leftColors = ['#6464ff', '#50ab5b', '#ff6a6a'];
-                mapElements(coloredEls.filter(e => e.center.x < svgCenterX), leftHomes, leftColors);
+            // Left side (x < centerX) is Padez 1
+            const leftHomes = planData.homes.filter(h => h.padez === 1).sort((a, b) => +a.number - +b.number);
+            const leftColors = ['#6464ff', '#50ab5b', '#ff6a6a'];
+            mapElements(coloredEls.filter(e => e.center.x < svgCenterX), leftHomes, leftColors);
 
-                const rightHomes = planData.homes.filter(h => h.padez === 1 && [N + 3, N + 4, N + 5].includes(Number(h.number))).sort((a, b) => +a.number - +b.number);
-                const rightColors = ['#83aefe', '#ff952b', '#50ab5b'];
-                mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightHomes, rightColors);
-            } else {
-                const leftHomes = planData.homes.filter(h => h.padez === 2 && [N, N + 1, N + 3].includes(Number(h.number))).sort((a, b) => +a.number - +b.number);
-                const leftColors = ['#6464ff', '#50ab5b', '#ff6a6a'];
-                mapElements(coloredEls.filter(e => e.center.x < svgCenterX), leftHomes, leftColors);
-
-                const rightHomes = planData.homes.filter(h => h.padez === 2 && [N + 2, N + 4, N + 5].includes(Number(h.number))).sort((a, b) => +a.number - +b.number);
-                const rightColors = ['#83aefe', '#ff952b', '#50ab5b'];
-                mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightHomes, rightColors);
-            }
+            // Right side (x >= centerX) is Padez 2
+            const rightHomes = planData.homes.filter(h => h.padez === 2).sort((a, b) => +a.number - +b.number);
+            const rightColors = ['#83aefe', '#ff952b', '#50ab5b'];
+            mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightHomes, rightColors);
         }
 
         // Stylize texts inside SVG
@@ -255,6 +246,28 @@ const PublicContractDetail = () => {
     };
 
     const handleMouseUp = () => setIsDragging(false);
+
+    // SVG Touch Panning (Mobile support)
+    const handleTouchStart = (e) => {
+        if (e.touches.length === 1) {
+            setIsDragging(true);
+            const touch = e.touches[0];
+            dragStart.current = { x: touch.clientX - svgPan.x, y: touch.clientY - svgPan.y };
+        }
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isDragging) return;
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            setSvgPan({
+                x: touch.clientX - dragStart.current.x,
+                y: touch.clientY - dragStart.current.y
+            });
+        }
+    };
+
+    const handleTouchEnd = () => setIsDragging(false);
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('uz-UZ').format(val) + " so'm";
@@ -474,6 +487,9 @@ const PublicContractDetail = () => {
                                     onMouseMove={handleMouseMove}
                                     onMouseUp={handleMouseUp}
                                     onMouseLeave={handleMouseUp}
+                                    onTouchStart={handleTouchStart}
+                                    onTouchMove={handleTouchMove}
+                                    onTouchEnd={handleTouchEnd}
                                 >
                                     {svgLoading ? (
                                         <div className="svg-loading-placeholder">
