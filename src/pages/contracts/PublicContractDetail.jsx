@@ -188,20 +188,29 @@ const PublicContractDetail = () => {
             });
         };
 
+        // Helper to sort homes by their numeric values (handling letters/suffixes safely)
+        const sortHomesNumerically = (homesList) => {
+            return [...homesList].sort((a, b) => {
+                const aNum = parseInt(String(a.number).replace(/\D/g, '')) || 0;
+                const bNum = parseInt(String(b.number).replace(/\D/g, '')) || 0;
+                return aNum - bNum;
+            });
+        };
+
         // Standard logic for mapping homes on qavat
         if (floorNum <= 2) {
-            const currentPadezHomes = planData.homes.filter(h => h.padez === padezNum).sort((a, b) => +a.number - +b.number);
+            const currentPadezHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === padezNum));
             const colorOrder = ['#6464ff', '#50ab5b', '#ff6a6a', '#83aefe', '#ff952b'];
             mapElements(coloredEls, currentPadezHomes, colorOrder);
         } else {
             // Left side (x < centerX) is Padez 1
-            const leftHomes = planData.homes.filter(h => h.padez === 1).sort((a, b) => +a.number - +b.number);
+            const leftHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === 1));
             const leftColors = ['#6464ff', '#50ab5b', '#ff6a6a'];
             mapElements(coloredEls.filter(e => e.center.x < svgCenterX), leftHomes, leftColors);
 
             // Right side (x >= centerX) is Padez 2
-            const rightHomes = planData.homes.filter(h => h.padez === 2).sort((a, b) => +a.number - +b.number);
-            const rightColors = ['#83aefe', '#ff952b', '#50ab5b'];
+            const rightHomes = sortHomesNumerically(planData.homes.filter(h => h.padez === 2));
+            const rightColors = ['#83aefe', '#50ab5b', '#ff952b'];
             mapElements(coloredEls.filter(e => e.center.x >= svgCenterX), rightHomes, rightColors);
         }
 
