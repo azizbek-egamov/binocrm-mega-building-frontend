@@ -237,22 +237,9 @@ const HomesList = () => {
         return new Intl.NumberFormat('uz-UZ').format(price);
     };
 
-    // Row click handler - conditional based on status
+    // Row click handler - opens modal for any home
     const handleRowClick = (home) => {
-        if (home.status === 'SOLD') {
-            // Sotilgan - shartnomaga yo'naltirish (home.contract_id orqali)
-            if (home.contract_id) {
-                window.open(`/contracts/${home.contract_id}/edit`, '_blank');
-            } else {
-                toast.error("Bu uy uchun shartnoma topilmadi");
-            }
-        } else if (home.status === 'AVAILABLE' || home.status === 'BOOKED') {
-            // Sotuvda yoki Band - edit modalni ochish
-            handleEdit(home);
-        } else {
-            // Boshqa statuslar - faqat ko'rish
-            toast.info("Bu holatdagi uyni tahrirlash mumkin emas");
-        }
+        handleEdit(home);
     };
 
     // Open edit modal
