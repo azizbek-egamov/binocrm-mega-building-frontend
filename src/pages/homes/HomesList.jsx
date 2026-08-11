@@ -242,7 +242,7 @@ const HomesList = () => {
         if (home.status === 'SOLD') {
             // Sotilgan - shartnomaga yo'naltirish (home.contract_id orqali)
             if (home.contract_id) {
-                navigate(`/contracts/${home.contract_id}/edit`);
+                window.open(`/contracts/${home.contract_id}/edit`, '_blank');
             } else {
                 toast.error("Bu uy uchun shartnoma topilmadi");
             }
@@ -786,16 +786,52 @@ const HomesList = () => {
                                                         setEditFormData({ ...editFormData, status: newStatus, is_booked: false, booked_by_name: '', booked_by_phone: '' });
                                                     }
                                                 }}
-                                                disabled={editFormData.is_booked}
+                                                disabled={editFormData.is_booked || editFormData.status === 'SOLD'}
                                             >
                                                 <option value="AVAILABLE">Sotuvda</option>
                                                 <option value="BOOKED">Band qilingan</option>
+                                                <option value="SOLD">Sotilgan</option>
                                                 <option value="UNAVAILABLE">Sotuvda emas</option>
                                             </select>
                                         </div>
 
-                                        {/* Booking Toggle */}
-                                        <div className="booking-toggle-section">
+                                        {editFormData.status === 'SOLD' && (
+                                            <div className="sold-info-box" style={{
+                                                marginTop: '12px',
+                                                padding: '12px 16px',
+                                                background: 'rgba(239, 68, 68, 0.08)',
+                                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                gap: '12px'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: '13px', fontWeight: '500' }}>
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <circle cx="12" cy="12" r="10" />
+                                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                                                    </svg>
+                                                    <span>Ushbu xonadon sotilgan. Statusni o'zgartirib bo'lmaydi.</span>
+                                                </div>
+                                                {editModal.home?.contract_id && (
+                                                    <a
+                                                        href={`/contracts/${editModal.home.contract_id}/edit`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn-secondary small"
+                                                        style={{ fontSize: '12px', padding: '6px 12px', whiteSpace: 'nowrap', cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                                                    >
+                                                        Shartnomani ko'rish →
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Booking Toggle - faqat sotilgan bo'lmasa */}
+                                        {editFormData.status !== 'SOLD' && (
+                                            <div className="booking-toggle-section">
                                             <div
                                                 className={`booking-toggle ${editFormData.is_booked ? 'active' : ''}`}
                                                 onClick={() => {
@@ -860,6 +896,7 @@ const HomesList = () => {
                                                 </div>
                                             )}
                                         </div>
+                                        )}
                                     </div>
 
                                     <div className="form-group">
