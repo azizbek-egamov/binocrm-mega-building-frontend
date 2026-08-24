@@ -118,6 +118,7 @@ const HomeSelector = ({ buildingId, onSelect, selectedHomeId, contractedHomeId }
     const [hoveredHome, setHoveredHome] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
     const [previewModal, setPreviewModal] = useState({ open: false, src: '' });
+    const [bookedConfirmModal, setBookedConfirmModal] = useState({ open: false, home: null });
 
     useEffect(() => {
         if (buildingId) {
@@ -202,8 +203,14 @@ const HomeSelector = ({ buildingId, onSelect, selectedHomeId, contractedHomeId }
             return;
         }
 
+        // BOOKED — confirmation modal orqali o'tkazish
+        if (home.status === 'BOOKED' || home.status === 'booked') {
+            setBookedConfirmModal({ open: true, home });
+            return;
+        }
+
         if (home.status !== 'AVAILABLE' && home.status !== 'available') {
-            toast.warning(`Bu uy ${home.status === 'SOLD' ? 'sotilgan' : 'band'}`);
+            toast.warning('Bu uy sotilgan');
             return;
         }
         onSelect(home);
@@ -299,17 +306,18 @@ const HomeSelector = ({ buildingId, onSelect, selectedHomeId, contractedHomeId }
                     <FloorPlanSelector
                         buildingId={buildingId}
                         onSelect={(home) => {
-                            // FloorPlanSelector dan kelgan home obyektini HomeSelector formatiga aylantir
-                            handleHomeClick(home);
+                            const fullHome = homes.find(h => String(h.id) === String(home?.id)) || home;
+                            handleHomeClick(fullHome);
                         }}
                         selectedHomeId={selectedHomeId}
                         contractedHomeId={contractedHomeId}
                         onHomeHover={(e, home) => {
+                            const fullHome = homes.find(h => String(h.id) === String(home?.id)) || home;
                             setTooltipPos({
                                 top: e.clientY,
                                 left: e.clientX
                             });
-                            setHoveredHome(home);
+                            setHoveredHome(fullHome);
                         }}
                         onHomeLeave={() => {
                             setHoveredHome(null);
@@ -484,6 +492,77 @@ const HomeSelector = ({ buildingId, onSelect, selectedHomeId, contractedHomeId }
                 imageSrc={previewModal.src}
                 onClose={() => setPreviewModal({ open: false, src: '' })}
             />
+
+            {/* Band xonadon — tasdiqlash modali */}
+            {bookedConfirmModal.open && createPortal(
+                <div className="modal-overlay" onClick={() => setBookedConfirmModal({ open: false, home: null })}>
+                    <div className="modal-content" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ color: '#f59e0b', display: 'flex' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                        <line x1="12" y1="9" x2="12" y2="13" />
+                                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                                    </svg>
+                                </span>
+                                Band xonadon
+                            </h3>
+                            <button className="modal-close" onClick={() => setBookedConfirmModal({ open: false, home: null })}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="modal-body" style={{ padding: '20px 24px' }}>
+                            <p style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                Bu xonadon band qilingan. Shartnomaga aylantirmoqchimisiz?
+                            </p>
+                            <div style={{
+                                background: 'rgba(245, 158, 11, 0.08)',
+                                border: '1px solid rgba(245, 158, 11, 0.3)',
+                                borderRadius: '10px',
+                                padding: '14px 16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Xonadon:</span>
+                                    <span style={{ fontWeight: '600' }}>#{bookedConfirmModal.home?.number}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Ism:</span>
+                                    <span style={{ fontWeight: '500' }}>{bookedConfirmModal.home?.booked_by_name || '—'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Telefon:</span>
+                                    <span style={{ fontWeight: '500' }}>{bookedConfirmModal.home?.booked_by_phone || '—'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setBookedConfirmModal({ open: false, home: null })}
+                            >
+                                Bekor qilish
+                            </button>
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    onSelect(bookedConfirmModal.home);
+                                    setBookedConfirmModal({ open: false, home: null });
+                                }}
+                            >
+                                Ha, tanlash
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

@@ -363,7 +363,9 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
         el.style.strokeWidth = '';
       }
 
-      const isClickable = home.status === 'AVAILABLE' || isSelected || isOriginal;
+      const isClickable = home.status === 'AVAILABLE' ||
+                          home.status === 'BOOKED' ||
+                          isSelected || isOriginal;
       el.style.cursor = isClickable ? 'pointer' : 'not-allowed';
     });
   }, [selectedHomeId, contractedHomeId, svgReady]);
@@ -447,7 +449,8 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
     el.style.stroke = '';
     el.style.strokeWidth = '';
     
-    const isClickable = home.status === 'AVAILABLE' || 
+    const isClickable = home.status === 'AVAILABLE' ||
+                        home.status === 'BOOKED' ||
                         String(home.id) === String(selectedHomeIdRef.current) || 
                         (contractedHomeIdRef.current && String(home.id) === String(contractedHomeIdRef.current));
     el.style.cursor = isClickable ? 'pointer' : 'not-allowed';
@@ -487,11 +490,12 @@ const FloorPlanSelector = ({ buildingId, onSelect, selectedHomeId, contractedHom
         el.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          const isClickable = home.status === 'AVAILABLE' || 
+          const isClickable = home.status === 'AVAILABLE' ||
+                              home.status === 'BOOKED' ||
                               String(home.id) === String(selectedHomeIdRef.current) || 
                               (contractedHomeIdRef.current && String(home.id) === String(contractedHomeIdRef.current));
           if (!isClickable) {
-            toast.warning(home.status === 'SOLD' ? 'Bu uy sotilgan' : 'Bu uy band');
+            toast.warning('Bu uy sotilgan');
             return;
           }
           userClickedRef.current = true; // Mark as clicked by user

@@ -117,6 +117,7 @@ const ContractCreate = () => {
     setSelectedHome(null);
   };
 
+
   const handleHomeSelect = (home) => {
     setSelectedHome(home);
     if (!home) {
@@ -134,7 +135,21 @@ const ContractCreate = () => {
       initial_payment: 0,
       _hasErrors: false,
     }));
+
+    // BOOKED xonadon — mijoz ism va telefonini avtomatik to'ldirish
+    if (home.status === 'BOOKED' && home.booked_by_name) {
+      // Telefon raqamidan faqat so'nggi 9 raqamni olish (998XXXXXXXXX → XXXXXXXXX)
+      const rawPhone = (home.booked_by_phone || '').replace(/\D/g, '');
+      const phone9 = rawPhone.length >= 9 ? rawPhone.slice(-9) : rawPhone;
+
+      setClientData((prev) => ({
+        ...prev,
+        full_name: home.booked_by_name,
+        phone: phone9,
+      }));
+    }
   };
+
 
   const handleClientChange = (field, value) => {
     setClientData((prev) => ({ ...prev, [field]: value }));

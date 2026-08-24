@@ -606,9 +606,10 @@ textarea.form-control {
 }
 
 .list-row.booked {
-    opacity: 0.7;
-    pointer-events: none;
+    opacity: 0.85;
+    cursor: pointer;
 }
+
 
 .status-badge {
     padding: 4px 8px;

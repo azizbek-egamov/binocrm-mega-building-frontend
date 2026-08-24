@@ -488,6 +488,9 @@ const BuildingInfo = () => {
                     <div className="legend-item">
                       <span className="dot sold"></span> Sotilgan
                     </div>
+                    <div className="legend-item">
+                      <span className="dot booked"></span> Band
+                    </div>
                   </div>
                 </div>
               </>
@@ -584,6 +587,49 @@ const BuildingInfo = () => {
                     </span>
                   </div>
                 </div>
+
+
+                {/* Band qilingan xonadon ma'lumotlari */}
+                {selectedHome.status === "BOOKED" && (
+                  <div className="contract-preview-section">
+                    <h4>Band qilish ma'lumotlari</h4>
+                    <div className="contract-info-card">
+                      <div className="info-row">
+                        <div className="info-item">
+                          <span className="label">Ism:</span>
+                          <span className="value">
+                            {selectedHome.booked_by_name || "—"}
+                          </span>
+                        </div>
+                        <div className="info-item">
+                          <span className="label">Telefon:</span>
+                          <span className="value">
+                            {selectedHome.booked_by_phone || "—"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        className="btn-view-contract"
+                        onClick={() => navigate('/contracts/create')}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="12" y1="18" x2="12" y2="12" />
+                          <line x1="9" y1="15" x2="15" y2="15" />
+                        </svg>
+                        Shartnoma tuzish →
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Contract Details for Sold Home */}
                 {selectedHome.status === "SOLD" && (
